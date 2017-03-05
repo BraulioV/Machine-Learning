@@ -264,3 +264,92 @@ etiquetasErroneas8_5 = cambiarEtiqueta(etiquetas7_4)
 pintar(puntos, funciones[[5]], range, "EJERCICIO 8.5", 
     colores = asignaColorEtiquetasErroneas(etiquetas7_4,etiquetasErroneas8_5), 
     verFuncion = T)
+
+
+print("#######################################################################")
+print("EJERCICIO PERCEPTRON")
+print("#######################################################################")
+
+PLA <- function(datos, label, max_iter = 3000, vini = c(00,00,00), verRecorrido = F){
+    
+    # Añadimos un 1 por la izquierda a la matriz de puntos para que los puntos
+    # de la matriz sean (x0, x1, x2) donde x1 será un 1, y x1 y x2 las 
+    # coordenadas del punto.
+    datos = cbind(rep(1, nrow(datos)), datos)
+    i = 1 # Contador para saber el número de iteraciones
+    converge = FALSE # Variable para saber si el perceptron cambia o no. Es decir,
+                     # cuando deje de cambiar, el algoritmo para
+
+    # Empezamos el bucle del perceptron
+    while ((i <= max_iter) & (!converge)){
+        # while (i <= max_iter){
+        cambiado = FALSE
+        # iteramos sobre los puntos de cada dato
+        for(j in 1:nrow(datos)){
+            # Calculamos el signo en función de los pesos realizando el producto
+            # del punto y el vector de pesos
+            signo = sign(datos[j,]%*% vini)
+            
+            # En caso de que el signo sea 0 por la función sign, se pone a 1
+            if (signo == 0){
+                signo = signo + 1
+            }
+
+            # Cuando las etiquetas no coinciden, se actualiza el vector 
+            # de pesos y se cambia la variable "cambiado" a true para indicar
+            # que se ha equivocado y por lo tanto no converge
+            if(label[j] != signo){
+                cambiado = TRUE
+                vini = vini + datos[j,]*label[j]
+                if(verRecorrido)
+                    abline(a=(-vini[1]/vini[3]),
+                        b=(-vini[2]/vini[3]), col="grey")
+            }
+        }
+
+        i = i + 1 # incrementamos el contador de iteraciones
+
+        if(!cambiado){
+            # en caso de que no se "equivoque" en ningún punto, decimos que
+            # el perceptron ha convergido y finaliza el bucle
+            converge = TRUE
+        }
+
+    }
+
+    # Se devuelve la recta que ha calculado el perceptron normalizada
+    pla_result = c((-vini[2]/vini[3]),(-vini[1]/vini[3]), i)
+    pla_result
+}
+
+pintarPLA <- function(puntosAPintar, rango, apartado, nombreGrafica, 
+    verF = T, verR = F, verLeyenda = F, leyenda, coloresLeyenda,
+    usarPocket = F){
+    
+
+    pintar(puntosAPintar, funciones[[apartado]], rango, nombreGrafica,
+           colores = (etiquetasFunc[[apartado]] + 4), verFuncion = verF)
+
+    if(verLeyenda){
+        # Leyenda de la función
+        legend(x=15,y=45,legend=leyenda, lty=c(1,1),
+            lwd=c(2.5,2.5),col=coloresLeyenda)
+    }
+
+    if(!usarPocket)
+        perceptron = PLA(datos = puntos, label = etiquetasFunc[[apartado]], 
+            verRecorrido = verR)
+    else{
+        perceptron = PocketPLA(datos = puntos, label = etiquetasFunc[[apartado]], 
+            verRecorrido = verR)
+
+        print("ERROR OBTENIDO CON PLAPOCKET")
+        print(perceptron[4])
+    }
+
+    abline(a=perceptron[2],b=perceptron[1], col="red", lwd=3)
+}
+
+pintarPLA(puntos, range, apartado = 1, nombreGrafica = "EJERCICIO PERCEPTRON",
+    leyenda = c("Función original","Perceptron"), verLeyenda = T,
+    coloresLeyenda=c("black","red"))
