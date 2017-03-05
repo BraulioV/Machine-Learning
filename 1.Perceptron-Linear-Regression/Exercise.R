@@ -213,3 +213,54 @@ etiquetas7_4 = evaluaPuntos(puntos, range, apartado = 5)
 
 etiquetasFunc = list(etiquetas6, etiquetas7_1, 
     etiquetas7_2, etiquetas7_3, etiquetas7_4)
+
+
+# 8.  Considerar de nuevo la muestra etiquetada en el apartado.6. Modifique 
+#     las etiquetas de un 10 % aleatorio de muestras positivas y otro 10 % 
+#     aleatorio de negativas. Visualice los puntos con las nuevas etiquetas y 
+#     la recta del apartado 6. En una gráfica aparte visualice nuevo los mismos 
+#     puntos pero junto con las funciones del apartado 7.
+
+cambiarEtiqueta <- function(etiquetas, porcentaje = 0.1){
+    i = 1
+    num = sample(1:length(etiquetas),length(etiquetas)*0.1)
+    etiquetas[num] = -etiquetas[num]
+    etiquetas
+}
+
+asignaColorEtiquetasErroneas <- function(etiquetasOriginales, etiquetasErroneas){
+    coloresEtiquetas = etiquetasOriginales
+    coloresEtiquetas[coloresEtiquetas != etiquetasErroneas] = 
+        coloresEtiquetas[coloresEtiquetas != etiquetasErroneas] -1
+    coloresEtiquetas + 4
+}
+
+etiquetasErroneas8_1 = cambiarEtiqueta(etiquetas6)
+
+pintar(puntos, funciones[[1]], range, "EJERCICIO 8.1", 
+    colores = asignaColorEtiquetasErroneas(etiquetas6,etiquetasErroneas8_1), 
+    verFuncion = T)
+
+etiquetasErroneas8_2 = cambiarEtiqueta(etiquetas7_1)
+
+pintar(puntos, funciones[[2]], range, "EJERCICIO 8.2", 
+    colores = asignaColorEtiquetasErroneas(etiquetas7_1,etiquetasErroneas8_2), 
+    verFuncion = T)
+
+etiquetasErroneas8_3 = cambiarEtiqueta(etiquetas7_2)
+
+pintar(puntos, funciones[[3]], range, "EJERCICIO 8.3", 
+    colores = asignaColorEtiquetasErroneas(etiquetas7_2,etiquetasErroneas8_3), 
+    verFuncion = T)
+
+etiquetasErroneas8_4 = cambiarEtiqueta(etiquetas7_3)
+
+pintar(puntos, funciones[[4]], range, "EJERCICIO 8.4", 
+    colores = asignaColorEtiquetasErroneas(etiquetas7_3,etiquetasErroneas8_4), 
+    verFuncion = T)
+
+etiquetasErroneas8_5 = cambiarEtiqueta(etiquetas7_4)
+
+pintar(puntos, funciones[[5]], range, "EJERCICIO 8.5", 
+    colores = asignaColorEtiquetasErroneas(etiquetas7_4,etiquetasErroneas8_5), 
+    verFuncion = T)
