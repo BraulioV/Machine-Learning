@@ -62,3 +62,98 @@ simula_gaus <- function(N=5,dim=2,sigma=1){
     num = matrix(rnorm(N*dim, media, sigma), nrow = N, ncol = dim)
     num
 }
+
+
+print("######################################################################")
+print("Ejercicio 2")
+print("######################################################################")
+lista = simula_gaus()
+print(lista)
+
+pintar <- function(puntos, funcion, intervalo, nombreGrafica, 
+    colores = colors(), verFuncion = FALSE){
+    if(verFuncion){
+        x <- y <- seq(range(puntos[,1])[1],range(puntos[,1])[2],length=100)
+        z <- outer(x,y,funcion)
+        contour(
+            x=x, y=x, z=z,
+            levels=0, las=1, drawlabels=FALSE, lwd=3, xlab="Eje X", 
+            ylab="Eje y",main = nombreGrafica
+        )
+    }
+    else{
+        plot(intervalo, intervalo, xlab="Eje X", ylab="Eje y", type="n", 
+        main = nombreGrafica)
+    }
+
+    points(puntos, col = colores, pch=19, lwd = 2)
+}
+
+
+#   3.  Suponer N = 50, dim = 2, rango = [-50,+50] en cada dimensión. Dibujar
+#       una gráfica de la salida de la función correspondiente
+
+pintaUnif <- function(N = 50, dim = 2, rangoV = -50:50){
+  pintar(simula_unif(N,dim,rangoV), intervalo = rangoV, 
+    nombreGrafica = "EJERCICIO 3", verFuncion = F)
+
+}
+
+print("######################################################################")
+print("Ejercicio 3")
+print("######################################################################")
+
+pintaUnif()
+
+#  4.  Suponer N = 50, dim = 2, rango = [5,7] en cada dimensión. Dibujar
+#      una gráfica de la salida de la función correspondiente.
+
+pintaGauss <- function(N = 50, dim = 2, sigma = 5:7){
+    pintar(simula_gaus(N,dim,sigma), intervalo = (sigma[3]*(-4)):(sigma[3]*4), 
+        nombreGrafica = "EJERCICIO 4", verFuncion = F)
+}
+
+pintaGauss()
+
+# 5.  Construir la función v=simula_recta(intervalo) quealcula los 
+#     parámetros, v=(a,b) de una recta aleatoria, y = ax + b, que corte al
+#     cuadrado [-50,50] x [-50,50] (Ayuda: Para calcular la recta simular las
+#     coordenadas de dos puntos dentro del cuadrado y calcular la recta que
+#     pasa por ellos)
+
+simula_recta <- function(dim = -50:50, punto_1 = c(sample(dim, 2)),
+    punto_2 = c(sample(dim, 2)), verPunto = T){
+    # Por defecto, obtenemos dos puntos aleatorios dentro del intervalo,
+    # pero en caso de que 
+    if(verPunto){
+        print("#####Punto 1")
+        print(punto_1)
+    
+        print("#####Punto 2")
+        print(punto_2)
+    }
+    
+    # Para calcular la recta que pasa por dos puntos, usaremos la expresión:
+    #       
+    #          x - x1      y - y1
+    #        --------- = ----------
+    #         x2 - x1     y2 - y1
+    #
+    # Con lo que si despejamos obtenemos
+    #
+    #   => (y2-y1)x - x1(y2-y1) = y(x2-x1) - y1(x2-x1)
+    #   => y = (y2-y1)x/(x2-x1) - (x1(y2-y1)+y1(x2-x1))/(y2-y1)
+
+    punto_aux = c(punto_2[1]-punto_1[1], punto_2[2]-punto_1[2])
+
+    ecuacion = c(punto_aux[2]/punto_aux[1], 
+        (((-1*punto_1[1]*punto_aux[2])+(punto_1[2]*punto_aux[1]))/punto_aux[1]))
+    ecuacion
+}
+
+print("######################################################################")
+print("Ejercicio 5")
+print("######################################################################")
+ecu = simula_recta()
+
+print(ecu)
