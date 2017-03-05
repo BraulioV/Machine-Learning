@@ -157,3 +157,59 @@ print("######################################################################")
 ecu = simula_recta()
 
 print(ecu)
+
+
+
+# 6.  Generar una muestra 2D de puntos usando simula_unif() y etiquetar la 
+#     muestra usando el signo de la función f (x, y) = y − ax − b de cada 
+#     punto a una recta simulada con simula_recta(). Mostrar una gráfica con 
+#     el resultado de la muestra etiquetada junto con la recta usada para ello.
+
+
+
+print("######################################################################")
+print("Ejercicio 6")
+print("######################################################################")
+
+evaluaPuntos <- function(puntosAEvaluar, intervalo, apartado){
+
+    # etiquetas = mapply(function(x,y) y - ecu[1]*x - ecu[2], puntosAEvaluar)
+    etiquetas = apply(X=puntosAEvaluar, FUN=funciones_eval[[apartado]], MARGIN=1)
+    sign(etiquetas)
+}
+
+range = -50:50
+puntos = simula_unif(N=100,dim=2,rango=range)
+etiquetas6 = evaluaPuntos(puntos, range, apartado = 1)
+
+pintar(puntos, funciones[[1]], range, "EJERCICIO 6", 
+    colores =  etiquetas6 + 4, verFuncion = T)
+
+# 7.  Usar la muestra generada en el apartado anterior y etiquetarla con +1,-1 
+#     usando el signo de cada una de las siguientes funciones
+#         - f (x, y) = (x − 10)^2 + (y − 20)^2 − 400
+#         - f (x, y) = 0.5*(x + 10)2 + (y − 20)2 − 400
+#         - f (x, y) = 0.5(x − 10)2 − (y + 20)2 − 400
+#         - f (x, y) = y − 20x2 − 5x + 3
+#     Visualizar el resultado del etiquetado de cada función junto con su 
+#     gráfica y comparar el resultado con el caso lineal Â¿Que consecuencias 
+#     extrae sobre la forma de las regiones positiva y negativa?
+
+etiquetas7_1 = evaluaPuntos(puntos, range, apartado = 2)
+# pintar(puntos, funciones[[2]], range, "EJERCICIO 7.1", 
+#     colores = etiquetas7_1+4, verFuncion = T)
+
+etiquetas7_2 = evaluaPuntos(puntos, range, apartado = 3)
+# pintar(puntos, funciones[[3]], range, "EJERCICIO 7.2", 
+#     colores = etiquetas7_2+4, verFuncion = T)
+
+etiquetas7_3 = evaluaPuntos(puntos, range, apartado = 4)
+# pintar(puntos, funciones[[4]], range, "EJERCICIO 7.3", 
+#     colores = etiquetas7_3+4, verFuncion = T)
+
+etiquetas7_4 = evaluaPuntos(puntos, range, apartado = 5)
+# pintar(puntos, funciones[[5]], range, "EJERCICIO 7.4", 
+#     colores = etiquetas7_4+4, verFuncion = T)
+
+etiquetasFunc = list(etiquetas6, etiquetas7_1, 
+    etiquetas7_2, etiquetas7_3, etiquetas7_4)
