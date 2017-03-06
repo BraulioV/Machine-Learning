@@ -353,3 +353,214 @@ pintarPLA <- function(puntosAPintar, rango, apartado, nombreGrafica,
 pintarPLA(puntos, range, apartado = 1, nombreGrafica = "EJERCICIO PERCEPTRON",
     leyenda = c("Función original","Perceptron"), verLeyenda = T,
     coloresLeyenda=c("black","red"))
+
+#---------------------------
+# EJERCICIO SOBRE REGRESIÓN LINEAL
+#
+
+# 1.  Abra el fichero ZipDigits.info disponible en la web del curso y lea la 
+#     descripción de la representación numérica de la base de datos de números 
+#     manuscritos que hay en el fichero ZipDigits.train.
+
+# En el fichero se especifica qué número es al principio de cada una de las filas de datos, seguidas por 256 valores de escalas de grises
+
+leerDatos <- function(nombreFichero="./DigitosZip/zip.train"){
+    zip = read.table(file=nombreFichero, sep=" ", stringsAsFactors=F)
+    # Como la última columna de la tabla que genera son valores NA, la 
+    # eliminamos igualándola a NULL.
+    unos = zip[which(zip$V1==1.0000),2:257]
+    cincos = zip[which(zip$V1==5.0000),2:257]
+    list(unos,cincos)
+}
+
+pintarNumero <- function(numeros){
+    # print(numeros)
+    numero = numeros[[1]][1,]
+    matriz = as.matrix(numero)
+    dim(matriz)=c(16,16)
+    image(matriz)
+}
+
+datosLeidos = leerDatos()
+
+#### ejercicio 3
+
+media <- function(n) apply(X=n,FUN=mean,MARGIN=1)
+simetria <- function(n) apply(X=n, 
+    FUN=function(line)-1*sum(abs(line[1:256]-line[256:1])), MARGIN=1)
+
+calculaSimetria <- function(numeros){
+    # Calculamos la media de los píxeles para los unos y los cincos, además 
+    # de las simetrias de ambos, devolviendolos en distintas listas
+    unos=list(media(numeros[[1]]),simetria(numeros[[1]]))
+    cincos=list(media(numeros[[2]]),simetria(numeros[[2]]))
+    list(unos,cincos)
+}
+
+val=calculaSimetria(datosLeidos)
+
+#### ejercicio 4
+
+representarMediaSimetria <- function(valores){
+    mean1 = valores[[1]][[1]]
+    simetria1 = valores[[1]][[2]]
+
+    mean5 = valores[[2]][[1]]
+    simetria5 = valores[[2]][[2]]
+
+    plot(x=mean5, y=simetria5, col = "red",pch=19, lwd = 2, main="Media y simetría de los cincos")
+    plot(x=mean1, y=simetria1, col = "green",pch=19, lwd = 2, main="Media y simetría de los unos")
+}
+
+representarMediaSimetria(val)
+
+Regress_Lin <- function(datos, label){
+    pseudoinversa = solve(t(datos)%*%datos)%*%t(datos)
+
+    wlin=(pseudoinversa%*%label)
+    y_prima=datos%*%(wlin)
+
+    list(wlin, y_prima)
+
+}
+
+ajusteRegresion <- function(media, simetria){
+    regresion = Regress_Lin(media, simetria)
+    plot(x=media, y=simetria, col = "green",pch=19, lwd = 2, main="Media y simetría de los unos")
+    lines(x=media, y = regresion[[2]], col="blue", lwd=2, pch=19)
+}
+
+ajusteRegresion(val[[2]][[1]], val[[2]][[2]])
+ajusteRegresion(val[[2]][[1]], val[[2]][[2]])
+
+tam = 100
+rangoEJ7 = -10:10
+rectaEJ7 = simula_recta(dim=rangoEJ7)
+
+calcularEout <- function(ein, datos, tam){
+    Eout = ein + (ncol(datos))/tam
+    Eout
+}
+
+calcularEin <- function(X, wlin, N, y){
+    errorIN = (1/N)*(t(wlin)%*%t(X)%*%X%*%wlin - 
+        2*t(wlin)%*%t(X)%*%y + 
+        t(y)%*%y)
+    
+}
+
+regresionLinealClasificacion <- function(){
+
+    puntosEJ7 = simula_unif(N=tam, dim=2, rango=rangoEJ7)
+    etiquetasEJ7 = evaluaPuntos(puntosEJ7, rangoEJ7, apartado = 6)
+
+    g = Regress_Lin(puntosEJ7, etiquetasEJ7)
+
+    wlin = g[[1]]
+    errorIN = calcularEin(X = puntosEJ7, wlin = g[[1]], N = tam, y = etiquetasEJ7)
+    
+    Eout = calcularEout(errorIN, puntosEJ7, tam)
+    c(errorIN, Eout)
+
+}
+
+apartadoEJ7C <- function(){
+    # seleccionamos el tamaño de la muestra a 10 y generamos las muestras, 
+    # junto con las etiquetas
+    tam = 10
+    puntosEJ7C = simula_unif(N=tam, dim=2, rango=rangoEJ7)
+    etiquetasEJ7C = evaluaPuntos(puntosEJ7C, rangoEJ7, apartado = 6)
+
+    # ajustamos la regresión para los datos y las etiquetas
+    regC = Regress_Lin(puntosEJ7C, etiquetasEJ7C)
+
+    # una vez que tenemos los datos, y la regresión, calculamos los 
+    # parámetros de la recta que se ajustan a la regresión
+    rectaEJ7C = simula_recta(punto_1 = c(puntosEJ7C[1,1],regC[[1]][1,]),
+                            punto_2 = c(puntosEJ7C[2,1],regC[[2]][1,]),
+                            verPunto = F)    
+    
+    # lanzamos el pla con la recta que se ajusta a la regresión como vector
+    # inicial del pla
+    plaEJ7C = PLA(datos=puntosEJ7C, label=etiquetasEJ7C, 
+        max_iter = 3000, vini = c(rectaEJ7C[2],rectaEJ7C[1],1))
+
+    plaEJ7C
+}
+
+# apartado a y b
+Eins = vector(length=1000)
+Eouts = vector(length=1000)
+numMedioIteraciones = vector(length=1000)
+for (i in 1:1000) {
+    Eins[i] = regresionLinealClasificacion()[1]
+    Eouts[i] = regresionLinealClasificacion()[2]
+    numMedioIteraciones[i] = apartadoEJ7C()[3]
+
+}
+meanEin = mean(Eins)
+meanEout = mean(Eouts)
+meanIters = mean(numMedioIteraciones)
+cat("Media de Ein para la regresion lineal = ",meanEin,"\n")
+cat("Media de Eout para la regresion lineal = ",meanEout,"\n")
+cat("Numero medio de iteraciones para el PLA = ",meanIters,"\n")
+
+#------------------------------------------------------------------
+#   EJERCICIO 8
+#------------------------------------------------------------------
+
+ejercicio8<-function(){
+    puntosEJ8 = simula_unif(N=1000, dim=2, rango=(-10:10))
+    etiquetasEJ8=evaluaPuntos(puntosAEvaluar=puntosEJ8, 
+        intervalo=(-10:10), apartado=7)
+
+    etiquetasEJ8=cambiarEtiqueta(etiquetasEJ8)
+
+    g=Regress_Lin(puntosEJ8,etiquetasEJ8)
+
+    Ein = calcularEin(X = puntosEJ8, wlin = g[[1]], N = 1000, y = etiquetasEJ8)
+    Ein
+}
+
+Eins8 = vector(length=1000)
+for (i in 1:1000) {
+    Eins8[i]=ejercicio8()
+}
+
+ErrorMedioIn8 = mean(Eins8)
+cat("Error medio en Ein del ejercicio 8",ErrorMedioIn8,"\n")
+
+apartado8B <- function(mostrar=F){
+    puntosEJ8 = simula_unif(N=1000, dim=2, rango=(-10:10))
+    etiquetasEJ8=evaluaPuntos(puntosAEvaluar=puntosEJ8, 
+        intervalo=(-10:10), apartado=7)
+    
+    etiquetasEJ8=cambiarEtiqueta(etiquetasEJ8)
+
+    f<-function(linea) c(1,linea[1],linea[2],linea[1]*linea[2],
+        linea[1]*linea[1],linea[2]*linea[2])
+
+    nuevosPuntos=apply(X=puntosEJ8, FUN=f, MARGIN=1)
+    nuevosPuntos = t(nuevosPuntos)
+    g=Regress_Lin(nuevosPuntos, etiquetasEJ8)
+    if(mostrar){
+        pintar(puntos=puntosEJ8, funciones[[7]], range, "EJERCICIO 8.b", 
+        colores =  etiquetasEJ8 + 4, verFuncion = T)
+        points(x=puntosEJ8[,1], y = g[[2]], col="blue", lwd=2, pch=19)
+    }
+
+    Ein = calcularEin(X = nuevosPuntos, wlin = g[[1]],
+        N = 1000, y = etiquetasEJ8)
+    Eout = calcularEout(Ein, nuevosPuntos, 1000)
+    Eout
+}
+
+apartado8B(T)
+
+Eouts8 = vector(length=1000)
+for (i in 1:1000) {
+    Eouts8[i]=ejercicio8()
+}
+
+ErrorMedioOut8 = mean(Eouts8)
+cat("Error medio en Eout del ejercicio 8",ErrorMedioOut8,"\n")
