@@ -7,33 +7,14 @@
 #--------------------------------------------
 #
 # set.seed(3)
-funciones = c(function(x,y) y - ecu[1]*x - ecu[2],
-              function(x,y) (x - 10)^2 + (y - 20)^2 - 400,
-              function(x,y) 0.5*(x + 10)^2 + (y - 20)^2 - 400,
-              function(x,y) 0.5*(x - 10)^2 - (y + 20)^2 - 400,
-              function(x,y) y - 20*x^2 - 5*x + 3,
-              function(x,y) y - rectaEJ7[1]*x - rectaEJ7[2],
-              function(x,y) x^2+y^2 - 25
-              )
+pause <-function(){
+    print("Pulsar una tecla para continuar")
+    scan(what=character(), n=1)
+}
 
-funciones_eval = c(function(eval) eval[2] - ecu[1]*eval[1] - ecu[2],
-                   function(eval) (eval[1] - 10)^2 + (eval[2] - 20)^2 - 400,
-                   function(eval)  0.5*(eval[1] + 10)^2 + (eval[2] - 20)^2 - 400,
-                   function(eval) 0.5*(eval[1] - 10)^2 - (eval[2] + 20)^2 - 400,
-                   function(eval) eval[2] - 20*eval[1]^2 - 5*eval[1] + 3,
-                   function(eval) eval[2] - rectaEJ7[1]*eval[1] - rectaEJ7[2],
-                   function(eval) eval[1]^2+eval[2]^2 - 25
-                   )
-
-#---------------------------
-# EJERCICIO 3.2
-#
-# Ejercicio de Generación y Visualización de datos
-#
-#   1.  Construir una función lista = simula_unif(N,dim,rango) que calcule una 
-#       lista de longitud N de vectores de dimensión dim conteniendo números
-#       aleatorios uniformes en el intervalo rango.
-
+#-----------------------------------------------
+#   EJERCICIO 1.1
+#-----------------------------------------------
 simula_unif <- function(N=5,dim=2,rango=5:20){
     # Generamos una matriz de datos aletorios distribuidos uniformemente
     # en el rango de valores introducido. Esta matriz tendrá el un número
@@ -43,16 +24,12 @@ simula_unif <- function(N=5,dim=2,rango=5:20){
     num
 }
 
-print("######################################################################")
-print("Ejercicio 1")
-print("######################################################################")
-lista = simula_unif()
-print(lista)
+print(simula_unif())
+pause()
 
-#   2.  Construir una función lista = simula_gaus(N,dim,sigma) que calcule una
-#       lista de longitud N de vectores de dimensión dim conteniendo números
-#       aleatorios gaussianos de media 0 y varianzas dadas por el vector sigma.
-#
+#-----------------------------------------------
+#   EJERCICIO 1.2
+#-----------------------------------------------
 
 simula_gaus <- function(N=5,dim=2,sigma=1){
     media = 0
@@ -63,12 +40,11 @@ simula_gaus <- function(N=5,dim=2,sigma=1){
     num
 }
 
-
-print("######################################################################")
-print("Ejercicio 2")
-print("######################################################################")
-lista = simula_gaus()
-print(lista)
+print(simula_gaus())
+pause()
+#-----------------------------------------------
+#   EJERCICIO 1.3
+#-----------------------------------------------
 
 pintar <- function(puntos, funcion, intervalo, nombreGrafica, 
     colores = colors(), verFuncion = FALSE){
@@ -89,24 +65,17 @@ pintar <- function(puntos, funcion, intervalo, nombreGrafica,
     points(puntos, col = colores, pch=19, lwd = 2)
 }
 
-
-#   3.  Suponer N = 50, dim = 2, rango = [-50,+50] en cada dimensión. Dibujar
-#       una gráfica de la salida de la función correspondiente
-
 pintaUnif <- function(N = 50, dim = 2, rangoV = -50:50){
   pintar(simula_unif(N,dim,rangoV), intervalo = rangoV, 
     nombreGrafica = "EJERCICIO 3", verFuncion = F)
-
 }
 
-print("######################################################################")
-print("Ejercicio 3")
-print("######################################################################")
-
 pintaUnif()
+pause()
 
-#  4.  Suponer N = 50, dim = 2, rango = [5,7] en cada dimensión. Dibujar
-#      una gráfica de la salida de la función correspondiente.
+#-----------------------------------------------
+#   EJERCICIO 1.4
+#-----------------------------------------------
 
 pintaGauss <- function(N = 50, dim = 2, sigma = 5:7){
     pintar(simula_gaus(N,dim,sigma), intervalo = (sigma[3]*(-4)):(sigma[3]*4), 
@@ -114,12 +83,11 @@ pintaGauss <- function(N = 50, dim = 2, sigma = 5:7){
 }
 
 pintaGauss()
+pause()
 
-# 5.  Construir la función v=simula_recta(intervalo) quealcula los 
-#     parámetros, v=(a,b) de una recta aleatoria, y = ax + b, que corte al
-#     cuadrado [-50,50] x [-50,50] (Ayuda: Para calcular la recta simular las
-#     coordenadas de dos puntos dentro del cuadrado y calcular la recta que
-#     pasa por ellos)
+#-----------------------------------------------
+#   EJERCICIO 1.5
+#-----------------------------------------------
 
 simula_recta <- function(dim = -50:50, punto_1 = c(sample(dim, 2)),
     punto_2 = c(sample(dim, 2)), verPunto = T){
@@ -151,75 +119,82 @@ simula_recta <- function(dim = -50:50, punto_1 = c(sample(dim, 2)),
     ecuacion
 }
 
-print("######################################################################")
-print("Ejercicio 5")
-print("######################################################################")
 ecu = simula_recta()
-
 print(ecu)
+pause()
 
+#-----------------------------------------------
+#   EJERCICIO 1.6
+#-----------------------------------------------
 
+funciones = c(function(x,y) y - ecu[1]*x - ecu[2],
+              function(x,y) (x - 10)^2 + (y - 20)^2 - 400,
+              function(x,y) 0.5*(x + 10)^2 + (y - 20)^2 - 400,
+              function(x,y) 0.5*(x - 10)^2 - (y + 20)^2 - 400,
+              function(x,y) y - 20*x^2 - 5*x + 3,
+              function(x,y) y - rectaEJ7[1]*x - rectaEJ7[2],
+              function(x,y) x^2+y^2 - 25
+              )
 
-# 6.  Generar una muestra 2D de puntos usando simula_unif() y etiquetar la 
-#     muestra usando el signo de la función f (x, y) = y − ax − b de cada 
-#     punto a una recta simulada con simula_recta(). Mostrar una gráfica con 
-#     el resultado de la muestra etiquetada junto con la recta usada para ello.
-
-
-
-print("######################################################################")
-print("Ejercicio 6")
-print("######################################################################")
+funciones_eval = c(function(eval) eval[2] - ecu[1]*eval[1] - ecu[2],
+                   function(eval) (eval[1] - 10)^2 + (eval[2] - 20)^2 - 400,
+                   function(eval)  0.5*(eval[1] + 10)^2 + (eval[2] - 20)^2 - 400,
+                   function(eval) 0.5*(eval[1] - 10)^2 - (eval[2] + 20)^2 - 400,
+                   function(eval) eval[2] - 20*eval[1]^2 - 5*eval[1] + 3,
+                   function(eval) eval[2] - rectaEJ7[1]*eval[1] - rectaEJ7[2],
+                   function(eval) eval[1]^2+eval[2]^2 - 25
+                   )
 
 evaluaPuntos <- function(puntosAEvaluar, intervalo, apartado){
-
-    # etiquetas = mapply(function(x,y) y - ecu[1]*x - ecu[2], puntosAEvaluar)
     etiquetas = apply(X=puntosAEvaluar, FUN=funciones_eval[[apartado]], MARGIN=1)
     sign(etiquetas)
 }
 
+
 range = -50:50
 puntos = simula_unif(N=100,dim=2,rango=range)
-etiquetas6 = evaluaPuntos(puntos, range, apartado = 1)
 
+etiquetas6 = evaluaPuntos(puntos, range, apartado = 1)
 pintar(puntos, funciones[[1]], range, "EJERCICIO 6", 
     colores =  etiquetas6 + 4, verFuncion = T)
 
-# 7.  Usar la muestra generada en el apartado anterior y etiquetarla con +1,-1 
-#     usando el signo de cada una de las siguientes funciones
-#         - f (x, y) = (x − 10)^2 + (y − 20)^2 − 400
-#         - f (x, y) = 0.5*(x + 10)2 + (y − 20)2 − 400
-#         - f (x, y) = 0.5(x − 10)2 − (y + 20)2 − 400
-#         - f (x, y) = y − 20x2 − 5x + 3
-#     Visualizar el resultado del etiquetado de cada función junto con su 
-#     gráfica y comparar el resultado con el caso lineal Â¿Que consecuencias 
-#     extrae sobre la forma de las regiones positiva y negativa?
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 1.7
+#-----------------------------------------------
+
 
 etiquetas7_1 = evaluaPuntos(puntos, range, apartado = 2)
-# pintar(puntos, funciones[[2]], range, "EJERCICIO 7.1", 
-#     colores = etiquetas7_1+4, verFuncion = T)
+pintar(puntos, funciones[[2]], range, "EJERCICIO 7.1", 
+    colores = etiquetas7_1+4, verFuncion = T)
+
+pause()
 
 etiquetas7_2 = evaluaPuntos(puntos, range, apartado = 3)
-# pintar(puntos, funciones[[3]], range, "EJERCICIO 7.2", 
-#     colores = etiquetas7_2+4, verFuncion = T)
+pintar(puntos, funciones[[3]], range, "EJERCICIO 7.2", 
+    colores = etiquetas7_2+4, verFuncion = T)
+
+pause()
 
 etiquetas7_3 = evaluaPuntos(puntos, range, apartado = 4)
-# pintar(puntos, funciones[[4]], range, "EJERCICIO 7.3", 
-#     colores = etiquetas7_3+4, verFuncion = T)
+pintar(puntos, funciones[[4]], range, "EJERCICIO 7.3", 
+    colores = etiquetas7_3+4, verFuncion = T)
+
+pause()
 
 etiquetas7_4 = evaluaPuntos(puntos, range, apartado = 5)
-# pintar(puntos, funciones[[5]], range, "EJERCICIO 7.4", 
-#     colores = etiquetas7_4+4, verFuncion = T)
+pintar(puntos, funciones[[5]], range, "EJERCICIO 7.4", 
+    colores = etiquetas7_4+4, verFuncion = T)
+
+pause()
 
 etiquetasFunc = list(etiquetas6, etiquetas7_1, 
     etiquetas7_2, etiquetas7_3, etiquetas7_4)
 
-
-# 8.  Considerar de nuevo la muestra etiquetada en el apartado.6. Modifique 
-#     las etiquetas de un 10 % aleatorio de muestras positivas y otro 10 % 
-#     aleatorio de negativas. Visualice los puntos con las nuevas etiquetas y 
-#     la recta del apartado 6. En una gráfica aparte visualice nuevo los mismos 
-#     puntos pero junto con las funciones del apartado 7.
+#-----------------------------------------------
+#   EJERCICIO 1.8
+#-----------------------------------------------
 
 cambiarEtiqueta <- function(etiquetas, porcentaje = 0.1){
     i = 1
@@ -228,6 +203,8 @@ cambiarEtiqueta <- function(etiquetas, porcentaje = 0.1){
     etiquetas
 }
 
+# Función para asignar colores distintos a las etiquetas bien clasificasdas
+# y a las mal clasificadas
 asignaColorEtiquetasErroneas <- function(etiquetasOriginales, etiquetasErroneas){
     coloresEtiquetas = etiquetasOriginales
     coloresEtiquetas[coloresEtiquetas != etiquetasErroneas] = 
@@ -241,11 +218,15 @@ pintar(puntos, funciones[[1]], range, "EJERCICIO 8.1",
     colores = asignaColorEtiquetasErroneas(etiquetas6,etiquetasErroneas8_1), 
     verFuncion = T)
 
+pause()
+
 etiquetasErroneas8_2 = cambiarEtiqueta(etiquetas7_1)
 
 pintar(puntos, funciones[[2]], range, "EJERCICIO 8.2", 
     colores = asignaColorEtiquetasErroneas(etiquetas7_1,etiquetasErroneas8_2), 
     verFuncion = T)
+
+pause()
 
 etiquetasErroneas8_3 = cambiarEtiqueta(etiquetas7_2)
 
@@ -253,11 +234,15 @@ pintar(puntos, funciones[[3]], range, "EJERCICIO 8.3",
     colores = asignaColorEtiquetasErroneas(etiquetas7_2,etiquetasErroneas8_3), 
     verFuncion = T)
 
+pause()
+
 etiquetasErroneas8_4 = cambiarEtiqueta(etiquetas7_3)
 
 pintar(puntos, funciones[[4]], range, "EJERCICIO 8.4", 
     colores = asignaColorEtiquetasErroneas(etiquetas7_3,etiquetasErroneas8_4), 
     verFuncion = T)
+
+pause()
 
 etiquetasErroneas8_5 = cambiarEtiqueta(etiquetas7_4)
 
@@ -265,12 +250,13 @@ pintar(puntos, funciones[[5]], range, "EJERCICIO 8.5",
     colores = asignaColorEtiquetasErroneas(etiquetas7_4,etiquetasErroneas8_5), 
     verFuncion = T)
 
+pause()
 
-print("#######################################################################")
-print("EJERCICIO PERCEPTRON")
-print("#######################################################################")
+#-----------------------------------------------
+#   EJERCICIO 2.1
+#-----------------------------------------------
 
-PLA <- function(datos, label, max_iter = 3000, vini = c(00,00,00), verRecorrido = F){
+PLA <- function(datos, label, max_iter = 3000, vini = c(0,0,0), verRecorrido = F){
     
     # Añadimos un 1 por la izquierda a la matriz de puntos para que los puntos
     # de la matriz sean (x0, x1, x2) donde x1 será un 1, y x1 y x2 las 
@@ -282,7 +268,6 @@ PLA <- function(datos, label, max_iter = 3000, vini = c(00,00,00), verRecorrido 
 
     # Empezamos el bucle del perceptron
     while ((i <= max_iter) & (!converge)){
-        # while (i <= max_iter){
         cambiado = FALSE
         # iteramos sobre los puntos de cada dato
         for(j in 1:nrow(datos)){
@@ -302,8 +287,7 @@ PLA <- function(datos, label, max_iter = 3000, vini = c(00,00,00), verRecorrido 
                 cambiado = TRUE
                 vini = vini + datos[j,]*label[j]
                 if(verRecorrido)
-                    abline(a=(-vini[1]/vini[3]),
-                        b=(-vini[2]/vini[3]), col="grey")
+                  abline(a=(-vini[1]/vini[3]),b=(-vini[2]/vini[3]), col="grey");
             }
         }
 
@@ -314,10 +298,10 @@ PLA <- function(datos, label, max_iter = 3000, vini = c(00,00,00), verRecorrido 
             # el perceptron ha convergido y finaliza el bucle
             converge = TRUE
         }
-
     }
 
     # Se devuelve la recta que ha calculado el perceptron normalizada
+    # y el número de iteraciones hechas por el algoritmo
     pla_result = c((-vini[2]/vini[3]),(-vini[1]/vini[3]), i)
     pla_result
 }
@@ -354,15 +338,145 @@ pintarPLA(puntos, range, apartado = 1, nombreGrafica = "EJERCICIO PERCEPTRON",
     leyenda = c("Función original","Perceptron"), verLeyenda = T,
     coloresLeyenda=c("black","red"))
 
-#---------------------------
-# EJERCICIO SOBRE REGRESIÓN LINEAL
-#
+pause()
 
-# 1.  Abra el fichero ZipDigits.info disponible en la web del curso y lea la 
-#     descripción de la representación numérica de la base de datos de números 
-#     manuscritos que hay en el fichero ZipDigits.train.
+#-----------------------------------------------
+#   EJERCICIO 2.2
+#-----------------------------------------------
 
-# En el fichero se especifica qué número es al principio de cada una de las filas de datos, seguidas por 256 valores de escalas de grises
+iteraciones = vector(length = 10)
+aux = c(0,0,0,0,0,1,0,1,0,0,1,1,1,0,0,1,0,1,1,1,0,1,1,1,0,0,1,1,0,1)
+pesosM = matrix(aux, nrow = 10, ncol = 3, byrow=T)
+
+for(i in 1:10){
+    perceptron = PLA(datos = puntos, label = etiquetas6, vini=pesosM[i,])
+    iteraciones[i] = perceptron[3]
+}
+
+tabla = cbind(pesosM, iteraciones)
+print(tabla)
+
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 2.3
+#-----------------------------------------------
+
+etiqErr = list(etiquetasErroneas8_1,etiquetasErroneas8_2,etiquetasErroneas8_3,
+    etiquetasErroneas8_4,etiquetasErroneas8_5)
+
+funcionesNoConvergentes <- function(apartado, nombre, rango=range){
+    # Se pinta el gráfico inicial, junto con la función original, junto con la
+    # leyenda del gráfico
+    pintar(puntos, funciones[[apartado]], rango, nombreGrafica=nombre,
+           colores = (etiqErr[[apartado]] + 4), verFuncion = T)
+    
+    legend(x=15,y=45,legend=c("Función original","PLA 10","PLA 100","PLA 1000"),
+        lty=c(1,1),lwd=c(2.5,2.5,2.5,2.5),
+        col=c("black","red","firebrick","chocolate"))
+    
+    coloresEj533 = c("red","firebrick","chocolate")
+    
+    for(i in 1:3){
+        plaRecta = PLA(datos = puntos, label = etiqErr[[apartado]], max_iter = 10^i)
+        abline(a=plaRecta[2],b=plaRecta[1], col=coloresEj533[i], lwd=3)
+    }
+}
+
+funcionesNoConvergentes(apartado = 1, nombre = "PLA no convergente 1")
+
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 2.4
+#-----------------------------------------------
+
+funcionesNoConvergentes(apartado = 2, nombre = "PLA no convergente 2")
+
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 2.5
+#-----------------------------------------------
+
+pintarPLA(puntos, range, apartado = 1, nombreGrafica = "EJERCICIO PERCEPTRON",
+    leyenda = c("Función original","Perceptron"), verLeyenda = F,
+    coloresLeyenda=c("black","red"), verR = T)
+pause()
+#-----------------------------------------------
+#   EJERCICIO 2.6
+#-----------------------------------------------
+
+Ein <- function(datosEval, labels, resultPLA){
+    # Esta función de evaluación se puede ver en la página 80 del libro
+    # "Learning From Data: A Short Course", donde se minimiza el error dentro
+    # de la muestra, calculando el porcentaje de error 
+    ein = sign(datosEval%*%resultPLA)
+    ein[ein==0]=1
+    error = length(ein[ein != labels])/nrow(datosEval)
+    error
+}
+
+PocketPLA <- function(datos, label, max_iter = 3000, vini = c(0,0,0), verRecorrido = F){
+    
+    # Añadimos un 1 por la izquierda a la matriz de puntos para que los puntos
+    # de la matriz sean (x0, x1, x2) donde x1 será un 1, y x1 y x2 las 
+    # coordenadas del punto.
+    datos = cbind(rep(1, nrow(datos)), datos)
+    i = 1 # Contador para saber el número de iteraciones
+
+    mejorSol = vini
+    porcentajeError = Ein(datos=datos, labels=label, resultPLA=mejorSol)
+
+    # Empezamos el bucle del perceptron
+    while (i <= max_iter){
+        # iteramos sobre los puntos de cada dato
+        for(j in 1:nrow(datos)){
+            # Calculamos el signo en función de los pesos realizando el producto
+            # del punto y el vector de pesos
+            signo = sign(datos[j,]%*% vini)
+            
+            # En caso de que el signo sea 0 por la función sign, se pone a 1
+            if (signo == 0){
+                signo = signo + 1
+            }
+            # Cuando las etiquetas no coinciden, se calcula w(t+1) y se guarda
+            # en v_aux. Tras esto, se calcula el error dentro de la muestra 
+            # (nuevoPorcentaje) y se compara con el que teníamos antes. Si es
+            # menor, se actualiza la mejor solucion y el porcentaje minimo. Si
+            # no, se pasa a la siguiente iteración con el w(t)
+            if(label[j] != signo){
+                v_aux = vini + datos[j,]*label[j]
+                nuevoPorcentaje = Ein(datos=datos, labels=label, resultPLA=v_aux)
+                if(porcentajeError > nuevoPorcentaje){
+                    # se muestran los 
+                    cat("Antiguo pocentaje de error = ",porcentajeError,"\n")
+                    cat("Nuevo porcentaje de error = ",nuevoPorcentaje,"\n")
+                    vini = v_aux
+                    porcentajeError = nuevoPorcentaje
+                }
+                if(verRecorrido)
+                    abline(a=(-vini[1]/vini[3]),
+                        b=(-vini[2]/vini[3]), col="grey")
+            }
+        }
+
+        i = i + 1 # incrementamos el contador de iteraciones
+    }
+
+    # Se devuelve la recta que ha calculado el perceptron normalizada
+    pla_result = c((-vini[2]/vini[3]),(-vini[1]/vini[3]), i, porcentajeError)
+    pla_result
+}
+
+pintarPLA(puntos, range, apartado = 4, nombreGrafica = "EJERCICIO PERCEPTRON POCKET",
+    leyenda = c("Función original","Perceptron pocket"), verLeyenda = T,
+    coloresLeyenda=c("black","red"), usarPocket = T)
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 3.2
+#-----------------------------------------------
 
 leerDatos <- function(nombreFichero="./DigitosZip/zip.train"){
     zip = read.table(file=nombreFichero, sep=" ", stringsAsFactors=F)
@@ -372,6 +486,7 @@ leerDatos <- function(nombreFichero="./DigitosZip/zip.train"){
     cincos = zip[which(zip$V1==5.0000),2:257]
     list(unos,cincos)
 }
+
 
 pintarNumero <- function(numeros){
     # print(numeros)
@@ -383,9 +498,19 @@ pintarNumero <- function(numeros){
 
 datosLeidos = leerDatos()
 
-#### ejercicio 3
+pintarNumero(datosLeidos[1])
+pause()
 
+pintarNumero(datosLeidos[2])
+pause()
+
+#-----------------------------------------------
+#   EJERCICIO 3.3
+#-----------------------------------------------
+
+# Función que calcula la media de los datos para cada píxel
 media <- function(n) apply(X=n,FUN=mean,MARGIN=1)
+# Función que calcula la simetría de la matriz
 simetria <- function(n) apply(X=n, 
     FUN=function(line)-1*sum(abs(line[1:256]-line[256:1])), MARGIN=1)
 
@@ -398,9 +523,11 @@ calculaSimetria <- function(numeros){
 }
 
 val=calculaSimetria(datosLeidos)
+pause()
 
-#### ejercicio 4
-
+#-----------------------------------------------
+#   EJERCICIO 3.4
+#-----------------------------------------------
 representarMediaSimetria <- function(valores){
     mean1 = valores[[1]][[1]]
     simetria1 = valores[[1]][[2]]
@@ -413,7 +540,10 @@ representarMediaSimetria <- function(valores){
 }
 
 representarMediaSimetria(val)
-
+pause()
+#-----------------------------------------------
+#   EJERCICIO 3.5
+#-----------------------------------------------
 Regress_Lin <- function(datos, label){
     pseudoinversa = solve(t(datos)%*%datos)%*%t(datos)
 
@@ -421,49 +551,68 @@ Regress_Lin <- function(datos, label){
     y_prima=datos%*%(wlin)
 
     list(wlin, y_prima)
-
 }
+
+#-----------------------------------------------
+#   EJERCICIO 3.6
+#-----------------------------------------------
 
 ajusteRegresion <- function(media, simetria){
     regresion = Regress_Lin(media, simetria)
-    plot(x=media, y=simetria, col = "green",pch=19, lwd = 2, main="Media y simetría de los unos")
+    plot(x=media, y=simetria, col = "green",pch=19, lwd = 2, main="Regresion")
     lines(x=media, y = regresion[[2]], col="blue", lwd=2, pch=19)
 }
+print(ajusteRegresion(val[[1]][[1]], val[[1]][[2]]))
+pause()
+print(ajusteRegresion(val[[2]][[1]], val[[2]][[2]]))
+pause()
 
-ajusteRegresion(val[[2]][[1]], val[[2]][[2]])
-ajusteRegresion(val[[2]][[1]], val[[2]][[2]])
 
+#-----------------------------------------------
+#   EJERCICIO 3.7
+#-----------------------------------------------
+# Indicamos el tamaño de la muestra, el rango de los puntos
+# y generamos la recta (o función f) que evaluará los puntos
 tam = 100
 rangoEJ7 = -10:10
-rectaEJ7 = simula_recta(dim=rangoEJ7)
+rectaEJ7 = simula_recta(dim=rangoEJ7,verPunto = F)
 
+# Función para calcular el error fuera de la muestra
 calcularEout <- function(ein, datos, tam){
     Eout = ein + (ncol(datos))/tam
     Eout
 }
 
+# Función para calcular el error dentro de la muestra
 calcularEin <- function(X, wlin, N, y){
     errorIN = (1/N)*(t(wlin)%*%t(X)%*%X%*%wlin - 
         2*t(wlin)%*%t(X)%*%y + 
         t(y)%*%y)
-    
 }
 
+# Función para calcular la regresión lineal para la clasificación.
+# En ella se devuelve el error dentro y fuera de la muestra
 regresionLinealClasificacion <- function(){
-
+  # Generamos una muestra y calculamos las etiquetas en función de 
+  # la recta generada anteriormente
     puntosEJ7 = simula_unif(N=tam, dim=2, rango=rangoEJ7)
     etiquetasEJ7 = evaluaPuntos(puntosEJ7, rangoEJ7, apartado = 6)
-
+  
+  # Ajustamos la regresión lineal para los puntos y las etiquetas
     g = Regress_Lin(puntosEJ7, etiquetasEJ7)
 
     wlin = g[[1]]
-    errorIN = calcularEin(X = puntosEJ7, wlin = g[[1]], N = tam, y = etiquetasEJ7)
-    
+  # Calculamos el error dentro de la muestra
+    errorIN = (1/tam)*(t(wlin)%*%t(puntosEJ7)%*%puntosEJ7%*%wlin - 
+        2*t(wlin)%*%t(puntosEJ7)%*%etiquetasEJ7 + 
+        t(etiquetasEJ7)%*%etiquetasEJ7)
+  # Y el error dentro de la muestra
     Eout = calcularEout(errorIN, puntosEJ7, tam)
     c(errorIN, Eout)
-
 }
 
+# Esta función se encarga de realizar todo lo necesario para 
+# realizar el apartado c
 apartadoEJ7C <- function(){
     # seleccionamos el tamaño de la muestra a 10 y generamos las muestras, 
     # junto con las etiquetas
@@ -488,7 +637,7 @@ apartadoEJ7C <- function(){
     plaEJ7C
 }
 
-# apartado a y b
+
 Eins = vector(length=1000)
 Eouts = vector(length=1000)
 numMedioIteraciones = vector(length=1000)
@@ -502,22 +651,28 @@ meanEin = mean(Eins)
 meanEout = mean(Eouts)
 meanIters = mean(numMedioIteraciones)
 cat("Media de Ein para la regresion lineal = ",meanEin,"\n")
+pause()
 cat("Media de Eout para la regresion lineal = ",meanEout,"\n")
+pause()
 cat("Numero medio de iteraciones para el PLA = ",meanIters,"\n")
+pause()
 
-#------------------------------------------------------------------
-#   EJERCICIO 8
-#------------------------------------------------------------------
-
+#-----------------------------------------------
+# EJERCICIO 3.8
+#-----------------------------------------------
 ejercicio8<-function(){
+  # Generamos la muestra y la evaluamos según la función
+  # mencionada en el enunciado. Tras esto, modificamos el 
+  # 10% de las etiquetas
     puntosEJ8 = simula_unif(N=1000, dim=2, rango=(-10:10))
     etiquetasEJ8=evaluaPuntos(puntosAEvaluar=puntosEJ8, 
         intervalo=(-10:10), apartado=7)
 
     etiquetasEJ8=cambiarEtiqueta(etiquetasEJ8)
 
+  # Ajustamos la regresión
     g=Regress_Lin(puntosEJ8,etiquetasEJ8)
-
+  # Calculamos el error de la muestra
     Ein = calcularEin(X = puntosEJ8, wlin = g[[1]], N = 1000, y = etiquetasEJ8)
     Ein
 }
@@ -526,41 +681,56 @@ Eins8 = vector(length=1000)
 for (i in 1:1000) {
     Eins8[i]=ejercicio8()
 }
-
 ErrorMedioIn8 = mean(Eins8)
 cat("Error medio en Ein del ejercicio 8",ErrorMedioIn8,"\n")
+pause()
 
+#-----------------------------------------------
 apartado8B <- function(mostrar=F){
+  # Generamos la muestra y la evaluamos según la función
+  # mencionada en el enunciado. Tras esto, modificamos el 
+  # 10% de las etiquetas
     puntosEJ8 = simula_unif(N=1000, dim=2, rango=(-10:10))
     etiquetasEJ8=evaluaPuntos(puntosAEvaluar=puntosEJ8, 
         intervalo=(-10:10), apartado=7)
     
     etiquetasEJ8=cambiarEtiqueta(etiquetasEJ8)
-
+    
+  # Esta función sirve para construir la matriz con 
+  # (1,x1,x2,x1x2,x1^2,x2^2)
     f<-function(linea) c(1,linea[1],linea[2],linea[1]*linea[2],
         linea[1]*linea[1],linea[2]*linea[2])
 
+  # Usamos la función appli para hacer el cálculo vectorizado
     nuevosPuntos=apply(X=puntosEJ8, FUN=f, MARGIN=1)
+  # Como la matriz que obtenemos es de 1000 columnas y 6 filas
+  # realizamos la traspuesta para obtener nuestra matriz de
+  # 1000 filas y 6 columnas
     nuevosPuntos = t(nuevosPuntos)
+  
+  # Ajustamos la regresión
     g=Regress_Lin(nuevosPuntos, etiquetasEJ8)
+    
+  # En caso de querer mostrar la función, se muestra por pantalla
     if(mostrar){
         pintar(puntos=puntosEJ8, funciones[[7]], range, "EJERCICIO 8.b", 
         colores =  etiquetasEJ8 + 4, verFuncion = T)
         points(x=puntosEJ8[,1], y = g[[2]], col="blue", lwd=2, pch=19)
     }
-
+  # Calculamos el error dentro y fuera de la muestra y devolvemos Eout
     Ein = calcularEin(X = nuevosPuntos, wlin = g[[1]],
         N = 1000, y = etiquetasEJ8)
     Eout = calcularEout(Ein, nuevosPuntos, 1000)
     Eout
 }
-
 apartado8B(T)
+pause()
+#-----------------------------------------------
 
 Eouts8 = vector(length=1000)
 for (i in 1:1000) {
     Eouts8[i]=ejercicio8()
 }
-
 ErrorMedioOut8 = mean(Eouts8)
 cat("Error medio en Eout del ejercicio 8",ErrorMedioOut8,"\n")
+pause()
