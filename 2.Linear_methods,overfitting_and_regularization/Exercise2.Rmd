@@ -153,3 +153,129 @@ Regress_Lin_Effic <- function(datos, label){
     c(b0, b1)
 }
 ```
+
+# Modelos Lineales
+
+## Gradiente Descendente. Implementar el algoritmo de gradiente descendiente.
+
+\sffamily\bfseries
+
+\begin{enumerate}[a)]
+  \item Considerar la función no lineal de error $E(u, v) = (ue^v - 2ve^{-u})^2$. Usar gradiente descendente y minimizar esta función de error, comenzando desde el punto (u, v) = (1, 1) y usando una tasa de aprendizaje $\eta = 0,1$.
+  \begin{enumerate}[1)]
+    \item Calcular analíticamente y mostrar la expresión del gradiente de la función $E(u, v)$.
+    \item ¿Cuántas iteraciones tarda el algoritmo en obtener por primera vez un valor de $E(u, v)$ inferior a $10^{-14}$ . (Usar flotantes de 64 bits).
+    \item ¿Qué valores de $(u, v)$ obtuvo en el apartado anterior cuando alcanzo el error de $10^{-14}$.
+  \end{enumerate}
+  \item Considerar ahora la función $f(x,y) = x^2 + 2y^2 + 2\cdot\sin(2\pi x)\sin(2\pi y)$.
+  \begin{enumerate}
+    \item Usar gradiente descendente para minimizar esta función. Usar como valores iniciales $x_0= 1$, $y_0=1$, la tasa de aprendizaje $\eta = 0.01$ y un máximo de 50 iteraciones. Generar un gráfico de cómo desciende el valor de la funión con las iteraciones. Repetir el experimento pero usando $\eta = 0.1$, comentar las diferencias.
+    \item Obtener el valor mínimo y los valores de las variables que lo alcanzan cuando el punto de inicio se fija: (0.1,0.1), (1,1),(-0.5,-0.5), (-1,-1). Generar una tabla con los valores obtenidos. ¿Cuál sería su conclusión sobre la verdadera dificultad de encontrar el mínimo global de una función arbitraria?
+  \end{enumerate}
+\end{enumerate}
+\normalfont
+Para realizar el gradiente de la función del apartado 1, tenemos que realizar las derivadas parciales de la función $E(u, v) = (ue^v - 2ve^{-u})^2$. Para ello, derivamos en función de $u$ y en función de $v$, obteniendo las siguientes expresiones:
+  \begin{displaymath}
+    E'(u) = 2(ue^v - 2ve^{-u})\cdot(e^v + 2ve^{-u})
+  \end{displaymath}
+  \begin{displaymath}
+    E'(v) = 2(ue^v - 2ve^{-u})\cdot (ue^v - 2e^{-u})
+  \end{displaymath}
+  
+Una vez que tenemos las derivadas, podemos hacer una implementación del gradiente descendiente para esta función, usando las derivadas calculadas anteriormente, junto con la función inicial. Esta versión la podemos ver a continuación:
+\end{enumerate}
+
+# Modelos Lineales
+
+## Gradiente Descendente. Implementar el algoritmo de gradiente descendiente.
+
+\sffamily\bfseries
+
+\begin{enumerate}[a)]
+  \item Considerar la función no lineal de error $E(u, v) = (ue^v - 2ve^{-u})^2$. Usar gradiente descendente y minimizar esta función de error, comenzando desde el punto (u, v) = (1, 1) y usando una tasa de aprendizaje $\eta = 0,1$.
+  \begin{enumerate}[1)]
+    \item Calcular analíticamente y mostrar la expresión del gradiente de la función $E(u, v)$.
+    \item ¿Cuántas iteraciones tarda el algoritmo en obtener por primera vez un valor de $E(u, v)$ inferior a $10^{-14}$ . (Usar flotantes de 64 bits).
+    \item ¿Qué valores de $(u, v)$ obtuvo en el apartado anterior cuando alcanzo el error de $10^{-14}$.
+  \end{enumerate}
+  \item Considerar ahora la función $f(x,y) = x^2 + 2y^2 + 2\cdot\sin(2\pi x)\sin(2\pi y)$.
+  \begin{enumerate}
+    \item Usar gradiente descendente para minimizar esta función. Usar como valores iniciales $x_0= 1$, $y_0=1$, la tasa de aprendizaje $\eta = 0.01$ y un máximo de 50 iteraciones. Generar un gráfico de cómo desciende el valor de la funión con las iteraciones. Repetir el experimento pero usando $\eta = 0.1$, comentar las diferencias.
+    \item Obtener el valor mínimo y los valores de las variables que lo alcanzan cuando el punto de inicio se fija: (0.1,0.1), (1,1),(-0.5,-0.5), (-1,-1). Generar una tabla con los valores obtenidos. ¿Cuál sería su conclusión sobre la verdadera dificultad de encontrar el mínimo global de una función arbitraria?
+  \end{enumerate}
+\end{enumerate}
+\normalfont
+Para realizar el gradiente de la función del apartado 1, tenemos que realizar las derivadas parciales de la función $E(u, v) = (ue^v - 2ve^{-u})^2$. Para ello, derivamos en función de $u$ y en función de $v$, obteniendo las siguientes expresiones:
+  \begin{displaymath}
+    E'(u) = 2(ue^v - 2ve^{-u})\cdot(e^v + 2ve^{-u})
+  \end{displaymath}
+  \begin{displaymath}
+    E'(v) = 2(ue^v - 2ve^{-u})\cdot (ue^v - 2e^{-u})
+  \end{displaymath}
+  
+Una vez que tenemos las derivadas, podemos hacer una implementación del gradiente descendiente para esta función, usando las derivadas calculadas anteriormente, junto con la función inicial. Esta versión la podemos ver a continuación:
+\end{enumerate}
+
+```{r gradDesc,echo=T}
+du <- function(u,v) 2*(u*exp(v) - 2*v*exp(-u))*(exp(v)+2*v*exp(-u))
+dv <- function(u,v) 2*(u*exp(v) - 2*v*exp(-u))*(u*exp(v)-2*exp(-u))
+fo <- function(u,v) (u*exp(v)-2*v*exp(-u))*(u*exp(v)-2*v*exp(-u))
+fb <- function(x,y) x*x +2*y*y + 2*sin(2*PI*x)*sin(2*PI*y)
+
+gradienteDescAnalitico <- function(x = 1,y = 1, eta = 0.1, 
+    prec=10^(-14), maxIter = 50, showIter = F){
+    xOld = 0
+    yOld = 0
+    nIter = 0
+    # Mientras que no se haya alcanzado el error máximo que queremos o 
+    # no se haya llegado al número total de iteraciones
+    while (abs(du(x,y)) > prec & nIter < maxIter & 
+        abs(xOld - x) > prec){
+        # Guardamos los valores de X e Y
+        xOld = x
+        yOld = y
+        # Actualizamos los valores de X e Y con las derivadas de su función
+        # junto con el factor de aprendizaje
+        x = xOld - eta*du(xOld,yOld)
+        y = yOld - eta*dv(xOld,yOld)
+        # Incrementamos el número de iteraciones
+        nIter = nIter+1
+    }
+    # Si no queremos ver el número de iteraciones, devolverá 
+    # el valor de la función en el punto, junto con el
+    # valor de X y el valor de Y
+    if(!showIter)
+        c(fo(x,y),x, y)
+    # Si queremos ver el número de iteraciones, realiza lo mismo que antes
+    # pero devolviendo como último valor el número de iteraciones
+    else
+        c(fo(x,y),x, y, nIter)
+}
+
+```
+
+Para ejecutar este algoritmo, realizamos la siguiente llamada para calcular el gradiente a la función anterior y como podemos ver, el resultado es el mismo, y converge en el mismo número de iteraciones.
+```{r, echo=T}
+gradDesc(func=fo,prec=10^(-14),showIter = T)
+```
+
+Para el apartado b, usaremos la función \texttt{gradDesc}, donde el parámetro \texttt{func} recibe la función a minimizar, y podremos mostrar los puntos que encuentra el gradiente si queremos con el flag \texttt{pintarGr} valiendo \textit{True}. Una vez hecho esto, pasamos a ver los valores que encuentra el gradiente para un $\eta=0.1$ y un $\eta=0.01$.
+
+```{r, echo=T}
+gradDesc(func=fb,eta = 0.01,pintarGr=T,nombre="Gradiente Descendiente con eta = 0.01")
+```
+En esta gráfica, podemos ver cómo el gradiente ha convergido y ha encontrado un mínimo, aunque haya sido un mínimo local. Esto se debe a que el valor de $\eta$ es muy pequeño, y el algoritmo dará pasos muy pequeños, con lo que se quedará ``estancado'' muy pronto. Sin embargo, con una tasa de aprendizaje de 0.1, pasa algo totalmente distinto.
+
+```{r, echo=T}
+gradDesc(func=fb,eta = 0.1,showIter=T,pintarGr=T,nombre="Gradiente Descendiente con eta = 0.1")
+```
+En este caso, tenemos justo lo contrario. El valor $\eta$ es muy grande y el algoritmo dará saltos de un lado para otro, siendo incapaz de converger en un mínimo, por lo que el valor de $f(x,y)$ en el mínimo, es mayor.
+
+| Punto de inicio | $f(x,y)$ |$x$|$y$| iteraciones |
+|:---------------:|:------:|:-:|:-:|:-----------:|
+|(0.1,0.1)|-1.8200785|0.2438050|-0.2379258|30|
+|(1,1)|0.5932694|1.2180703|0.7128120|27|
+|(-0.5,-0.5)|-1.3324811|-0.7313775|-0.2378554|26|
+|(-1,-1)|0.5932694|-1.2180703|-0.7128120|27|
+
+Visto esto, podemos ver que escoger bien el punto de inicio es bastante importante para encontrar el mínimo de la función, ya que el gradiente irá descendiento hasta que se encuentre un mínimo local, y encontrar este mínimo puede depender de dónde empecemos, como se puede ver en la tabla anterior.
