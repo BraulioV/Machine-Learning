@@ -229,3 +229,53 @@ print(gradDesc(func=fb,eta = 0.01,pintarGr=T,nombre="Gradiente Descendiente con 
 pause()
 print(gradDesc(func=fb,eta = 0.1,showIter=T,pintarGr=T,nombre="Gradiente Descendiente con eta = 0.1"))
 pause()
+
+#------------------------------------------------------------------------------
+#  EJERCICIO 1.2
+#------------------------------------------------------------------------------
+coordinateDescent <- function(x = 1, y = 1, eta = 0.1, func, prec = 10^(-14),
+    maxIter = 50, showIter = F, pintarGr=F, nombre = "Gradiente Descendiente"){
+    df = Deriv(f=func,x=formalArgs(func))
+    xOld = 0
+    yOld = y
+    nIter = 0
+    xs = c()
+    ys = c()
+    while (abs(df(x,y)[1]) > prec & nIter < maxIter){
+      # Almacenamos los valores de x e y en estas variables
+      # auxilares para usarlas más adelante
+        xOld = x
+        xs = c(xs, x)
+        ys = c(ys, y)
+      # Calculamos el nuevo valor de X usando la derivada
+        newValues = df(xOld,yOld)
+        x = xOld - eta*newValues[1]
+      # Calculamos el nuevo valor de Y usando la derivada, 
+      # pero con el valor nuevo de X
+        newValues = df(x,yOld)
+        y = yOld - eta*newValues[2]
+        nIter = nIter+1
+    }    
+    pts = cbind(xs,ys)
+    if(pintarGr)
+        pintar(puntos = pts, funcion = func, intervalo=c(-2,2), colores="red",
+            verFuncion=T, nombreGrafica=nombre, k=1:20)
+    if(!showIter)
+        c(func(x,y),x, y)
+    else
+        c(func(x,y),x, y, nIter)
+}
+
+print(coordinateDescent(func=fo,eta = 0.1,maxIter = 15,showIter = T))
+pause()
+print(gradDesc(func=fo,eta = 0.1,maxIter = 15,showIter = T))
+pause()
+
+print(coordinateDescent(func=fo,eta = 0.01,maxIter = 15,showIter = T))
+pause()
+print(gradDesc(func=fo,eta = 0.01,maxIter = 15,showIter = T))
+pause()
+print(coordinateDescent(func=fo,eta = 0.01,maxIter = 50,showIter = T))
+pause()
+print(gradDesc(func=fo,eta = 0.01,maxIter = 50,showIter = T))
+pause()

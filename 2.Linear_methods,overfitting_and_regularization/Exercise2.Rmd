@@ -279,3 +279,69 @@ En este caso, tenemos justo lo contrario. El valor $\eta$ es muy grande y el alg
 |(-1,-1)|0.5932694|-1.2180703|-0.7128120|27|
 
 Visto esto, podemos ver que escoger bien el punto de inicio es bastante importante para encontrar el mínimo de la función, ya que el gradiente irá descendiento hasta que se encuentre un mínimo local, y encontrar este mínimo puede depender de dónde empecemos, como se puede ver en la tabla anterior.
+
+## Coordenada Descendente
+
+\sffamily\bfseries
+En este ejercicio comparamos la eficiencia de la técnica de optimización de ``coordenada descendente'' usando la misma función del ejercicio 1.1a. En cada iteración, tenemos dos pasos a lo largo de dos coordenadas. En el Paso-1 nos movemos a lo largo de la -coordenada u para reducir el error (suponer que se verifica una aproximación de primer orden como en gradiente descendente), y el Paso-2 es para reevaluar y movernos a lo largo de la coordenada v para reducir el error (hacer la misma hipótesis que en el paso-1). Usar una tasa de aprendizaje $\eta = 0,1$.
+
+\begin{enumerate}
+  \item ¿Qué valor de la función $E(u, v)$ se obtiene después de 15 iteraciones completas (i.e. 30 pasos) ?
+  \item Establezca una comparación entre esta técnica y la técnica de gradiente descendente.
+\end{enumerate}
+\normalfont
+
+A continuación podemos ver la implementación del algoritmo de la coordenada descendente:
+
+```{r ,echo=TRUE}
+coordinateDescent <- function(x = 1, y = 1, eta = 0.1, func, prec = 10^(-14),
+    maxIter = 50, showIter = F, pintarGr=F, nombre = "Gradiente Descendiente"){
+    df = Deriv(f=func,x=formalArgs(func))
+    xOld = 0
+    yOld = y
+    nIter = 0
+    xs = c()
+    ys = c()
+    while (abs(df(x,y)[1]) > prec & nIter < maxIter){
+      # Almacenamos los valores de x e y en estas variables
+      # auxilares para usarlas más adelante
+        xOld = x
+        xs = c(xs, x)
+        ys = c(ys, y)
+      # Calculamos el nuevo valor de X usando la derivada
+        newValues = df(xOld,yOld)
+        x = xOld - eta*newValues[1]
+      # Calculamos el nuevo valor de Y usando la derivada, 
+      # pero con el valor nuevo de X
+        newValues = df(x,yOld)
+        y = yOld - eta*newValues[2]
+        nIter = nIter+1
+    }    
+    pts = cbind(xs,ys)
+    if(pintarGr)
+        pintar(puntos = pts, funcion = func, intervalo=c(-2,2), colores="red",
+            verFuncion=T, nombreGrafica=nombre,k=1:20)
+    if(!showIter)
+        c(func(x,y),x, y)
+    else
+        c(func(x,y),x, y, nIter)
+}
+```
+
+Para ver el resultado de este algoritmo al pasar 15 iteraciones, lo ejecutaremos de la siguiente forma:
+```{r, echo=TRUE}
+coordinateDescent(func=fo,eta = 0.1,maxIter = 15,showIter = T)
+```
+A su vez lo compararemos con el algoritmo anterior, usando la misma precisión y el mismo número de iteraciones:
+```{r, echo=TRUE}
+gradDesc(func=fo,eta = 0.1,maxIter = 15,showIter = T)
+```
+
+Como se puede ver, el resultado de la coordenada descendente es mucho mejor que el gradiente descendiente clásico, ya que el mínimo que obtiene para 15 iteraciones, es de varios órdenes de magnitud menor que el del gradiente descendiente, para esa tasa de aprendizaje y número de iteraciones, pero con una tasa de aprendizaje menor y mayor número de iteraciones obtenemos lo siguiente:
+```{r, echo=TRUE}
+coordinateDescent(func=fo,eta = 0.01,maxIter = 15,showIter = T)
+gradDesc(func=fo,eta = 0.01,maxIter = 15,showIter = T)
+coordinateDescent(func=fo,eta = 0.01,maxIter = 50,showIter = T)
+gradDesc(func=fo,eta = 0.01,maxIter = 50,showIter = T)
+```
+Vemos que cambiando la tasa de aprendizaje, la coordenada descendente es capaz de minimizar más la función que el gradiente descendiente, ya que el mínimo que ha encontrado es menor que el gradiente descendiente en el mismo número de iteraciones, y si además, aumentamos aún más el número de iteraciones, el mínimo que encuentra es aún más pequeño, pero trabaja mucho mejor con una tasa de aprendizaje mayor.
