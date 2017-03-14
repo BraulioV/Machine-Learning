@@ -1,0 +1,155 @@
+---
+title: "Aprendizaje Automático: Práctica 2"
+author: "Braulio Vargas López"
+date: "1 de abril de 2016"
+lang: es
+header-includes:
+  - \usepackage{enumerate}
+  - \usepackage{cancel}
+output: 
+  pdf_document:
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library("Deriv")
+library("ggplot2")
+library("orthopolynom")
+PI = 3.141592653589793
+knitr::opts_chunk$set(echo = TRUE)
+
+pintar <- function(puntos, funcion, intervalo, nombreGrafica, 
+    colores = colors(), verFuncion = FALSE, aniadir=FALSE, colFunc = "black",k=0){
+    par(bg="lightcyan")
+    if(verFuncion){
+        x <- y <- seq(range(puntos[,1])[1],range(puntos[,1])[2],length=100)
+        z <- outer(x,y,funcion)
+        contour(
+            x=x, y=x, z=z,
+            levels=k, las=1, drawlabels=FALSE, lwd=3, xlab="Eje X", 
+            ylab="Eje y",main = nombreGrafica, add = aniadir, col = colFunc
+        )
+    }
+    else{
+        plot(intervalo, intervalo, xlab="Eje X", ylab="Eje y", type="n", 
+            main = nombreGrafica)
+    }
+
+    points(puntos, col = colores, pch=19, lwd = 2)
+}
+
+simula_unif <- function(N=5,dim=2,rango=5:20){
+    num = matrix(runif(N*dim, min=rango[1], max=rango[length(rango)]), 
+      nrow = N, ncol = dim)
+    num
+}
+simula_gaus <- function(N=5,dim=2,sigma=1){
+    media = 0
+    num = matrix(rnorm(N*dim, media, sigma), nrow = N, ncol = dim)
+    num
+}
+
+simula_recta <- function(dim = -50:50, punto_1 = simula_unif(N=1,dim=2,rango=-1:1),
+    punto_2 = simula_unif(N=1,dim=2,rango=-1:1), verPunto = T){
+    # Por defecto, obtenemos dos puntos aleatorios dentro del intervalo,
+    # pero en caso de que 
+    if(verPunto){
+        print("#####Punto 1")
+        print(punto_1)
+    
+        print("#####Punto 2")
+        print(punto_2)
+    }
+
+    punto_aux = c(punto_2[1]-punto_1[1], punto_2[2]-punto_1[2])
+
+    ecuacion = c(punto_aux[2]/punto_aux[1], 
+        (((-1*punto_1[1]*punto_aux[2])+(punto_1[2]*punto_aux[1]))/punto_aux[1]))
+    ecuacion
+}
+
+evaluaPuntos <- function(puntosAEvaluar, func){
+    etiquetas = apply(X=puntosAEvaluar, FUN=func, MARGIN=1)
+    sign(etiquetas)
+}
+
+Ein <- function(datosEval, labels, resultPLA){
+    ein = sign(datosEval%*%resultPLA)
+    ein[ein==0]=1
+    error = length(ein[ein != labels])/nrow(datosEval)
+    error
+}
+
+PLA <- function(datos, label, max_iter = 3000, vini = c(0,0,0), verRecorrido = F){
+    datos = cbind(rep(1, nrow(datos)), datos)
+    i = 1
+    mejorSol = vini
+    porcentajeError = Ein(datos=datos, labels=label, resultPLA=mejorSol)
+    cambiado = T
+    while (i <= max_iter & cambiado){
+        for(j in 1:nrow(datos)){
+            signo = sign(datos[j,]%*% vini)
+            if (signo == 0){
+                signo = signo + 1
+            }
+            if(label[j] != signo){
+                v_aux = vini + datos[j,]*label[j]
+            }
+        }
+        nuevoPorcentaje = Ein(datos=datos, labels=label, resultPLA=v_aux)
+        if(porcentajeError > nuevoPorcentaje){
+            cat("Antiguo pocentaje de error = ",porcentajeError,"\n")
+            cat("Nuevo porcentaje de error = ",nuevoPorcentaje,"\n")
+            vini = v_aux
+            porcentajeError = nuevoPorcentaje
+        }
+        else
+            cambiado = F
+        if(verRecorrido)
+            abline(a=(-vini[1]/vini[3]),
+                b=(-vini[2]/vini[3]), col="grey")
+        i = i + 1
+    }
+    vini = (vini/vini[1])
+    vini[3] = -vini[3]
+    pla_result = c(vini, i, porcentajeError)
+    pla_result
+}
+
+readFile <- function(fileName = "./DigitosZip/zip.train"){
+    digit.train <- read.table(fileName, quote="\"", 
+        comment.char="", stringsAsFactors=FALSE)
+
+    digitos15.train = digit.train[digit.train$V1==1 | digit.train$V1==5,]
+    digitos = digitos15.train[,1]
+    ndigitos = nrow(digitos15.train)
+    grises = array(unlist(subset(digitos15.train,select=-V1)),c(ndigitos,16,16))
+    rm(digit.train)
+    rm(digitos15.train)
+    # grises
+    digitos[digitos == 5] = -1
+    list(digitos, grises)
+}
+
+getSymmetry <- function(data){
+    x = abs(data-data[nrow(data):1,])
+    -sum(x)
+}
+
+intensityAndSymmetry <- function(data){
+    n = nrow(data)
+    intensity = apply(data[1:n,,],1, mean)
+    symmetry = apply(data[1:n,,],1,getSymmetry)
+
+    result = as.matrix(cbind(intensity, symmetry))
+    result
+}
+
+Regress_Lin_Effic <- function(datos, label){
+    b1 = sum((datos-mean(datos)) * (label - mean(label))) / sum((datos-mean(datos))^2)
+    b0 = mean(label) - b1*mean(datos)
+    c(b0, b1)
+}
+```
