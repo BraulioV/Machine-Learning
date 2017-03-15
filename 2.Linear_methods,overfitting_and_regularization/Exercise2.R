@@ -279,3 +279,76 @@ print(coordinateDescent(func=fo,eta = 0.01,maxIter = 50,showIter = T))
 pause()
 print(gradDesc(func=fo,eta = 0.01,maxIter = 50,showIter = T))
 pause()
+
+#------------------------------------------------------------------------------
+#  EJERCICIO 1.3
+#------------------------------------------------------------------------------
+
+newtonMethod <- function(x = 0.1, y = 0.1,prec=10^{-14}, 
+  func, maxIter = 50,showIter = T, pintarGr=F, nombre = "Metodo de Newton"){
+  # Calculamos la derivada primera de la función
+    df1 = Deriv(f=func,x=formalArgs(func))
+  # Calculamos la derivada segunda de la función
+    df2 = Deriv(f=func,x=formalArgs(func),nderiv=2)
+  # Inicializamos los puntos y el contador de iteraciones
+    xOld = 0
+    yOld = 0
+    xs = c()
+    ys = c()
+    nIter = 0
+    itsTimeToStop1 = itsTimeToStop2 = itsTimeToStop3 = F
+  # E iniciamos el bucle
+    while(!itsTimeToStop1 & !itsTimeToStop2 & !itsTimeToStop3){
+        xOld = x
+        yOld = y
+        
+        # Calculamos el gradiente con la primera derivada
+        newValues_1 = df1(xOld,yOld)
+        
+        # Calculamos el gradiente con la segunda derivada
+        newValues_2 = df2(xOld,yOld)
+
+        # Actualizamos los puntos
+        xy = solve(matrix(newValues_2, ncol=2))%*%newValues_1
+
+        x = xOld - xy[1,1]
+        y = yOld - xy[2,1]
+        
+        
+        if(abs(func(xOld, yOld) - func(x, y)) < prec){
+          itsTimeToStop1 = T
+          print("Me salgo porque estoy en un minimo local")
+        }
+        else if(nIter >= maxIter-1){
+          itsTimeToStop2 = T
+          print("Me salgo porque me he pasado de iteraciones")
+        }
+        else if(norm((as.matrix(df1(x,y))), type = "F") < prec){
+          itsTimeToStop3 = T
+          print("Me salgo porque he minimizado por debajo del umbral")
+        }            
+        
+        xs = c(xs, nIter)
+        ys = c(ys, func(x,y))
+        nIter = nIter + 1
+    }
+    if(pintarGr){
+        pts = cbind(xs,ys)
+        #pintar(puntos = pts, funcion = func, intervalo=c(-2,2), colores="red",
+        #    verFuncion=T, nombreGrafica=nombre)
+        plot(pts, type = "l")
+    }
+    if(!showIter)
+        c(func(x,y),x, y)
+    else
+        c(func(x,y),x, y, nIter)
+}
+
+print(newtonMethod(func = fb, pintarGr = T))
+pause()
+print(newtonMethod(x = 1, y = 1, func = fb, pintarGr = T, nombre = "P. inicio = (1,1)"))
+pause()
+print(newtonMethod(x = -0.5, y = -0.5, func = fb, pintarGr = T, nombre = "P. inicio = (-0.5,-0.5)"))
+pause()
+print(newtonMethod(x = -1, y = -1, func = fb, pintarGr = T, nombre = "P. inicio = (-1,-1)"))
+pause()

@@ -345,3 +345,126 @@ coordinateDescent(func=fo,eta = 0.01,maxIter = 50,showIter = T)
 gradDesc(func=fo,eta = 0.01,maxIter = 50,showIter = T)
 ```
 Vemos que cambiando la tasa de aprendizaje, la coordenada descendente es capaz de minimizar más la función que el gradiente descendiente, ya que el mínimo que ha encontrado es menor que el gradiente descendiente en el mismo número de iteraciones, y si además, aumentamos aún más el número de iteraciones, el mínimo que encuentra es aún más pequeño, pero trabaja mucho mejor con una tasa de aprendizaje mayor.
+
+## Método de Newton
+
+\sffamily\bfseries
+Implementar el algoritmo de minimización de Newton y aplicarlo a la función $f (x, y)$ dada en el ejercicio.1b. Desarrolle los mismos experimentos usando los mismos puntos de inicio.
+\begin{enumerate}[1)]
+\item Generar un gráfico de como desciende el valor de la función con las iteraciones.
+\item Extraer conclusiones sobre las conductas de los algoritmos comparando la curva de decrecimiento de la función calculada en el apartado anterior y la correspondiente obtenida con gradiente descendente.
+\end{enumerate}
+\normalfont
+
+La implementación del método de Newton la podemos ver a continuación:
+
+```{r,echo=TRUE}
+newtonMethod <- function(x = 0.1, y = 0.1,prec=10^{-14}, 
+  func, maxIter = 50,showIter = T, pintarGr=F, nombre = "Metodo de Newton"){
+  # Calculamos la derivada primera de la función
+    df1 = Deriv(f=func,x=formalArgs(func))
+  # Calculamos la derivada segunda de la función
+    df2 = Deriv(f=func,x=formalArgs(func),nderiv=2)
+  # Inicializamos los puntos y el contador de iteraciones
+    xOld = 0
+    yOld = 0
+    xs = c()
+    ys = c()
+    nIter = 0
+    itsTimeToStop1 = itsTimeToStop2 = itsTimeToStop3 = F
+  # E iniciamos el bucle
+    while(!itsTimeToStop1 & !itsTimeToStop2 & !itsTimeToStop3){
+        xOld = x
+        yOld = y
+        
+        # Calculamos el gradiente con la primera derivada
+        newValues_1 = df1(xOld,yOld)
+        
+        # Calculamos el gradiente con la segunda derivada
+        newValues_2 = df2(xOld,yOld)
+
+        # Actualizamos los puntos
+        xy = solve(matrix(newValues_2, ncol=2))%*%newValues_1
+
+        x = xOld - xy[1,1]
+        y = yOld - xy[2,1]
+        
+        
+        if(abs(func(xOld, yOld) - func(x, y)) < prec){
+          itsTimeToStop1 = T
+          print("Me salgo porque estoy en un minimo local")
+        }
+        else if(nIter >= maxIter-1){
+          itsTimeToStop2 = T
+          print("Me salgo porque me he pasado de iteraciones")
+        }
+        else if(norm((as.matrix(df1(x,y))), type = "F") < prec){
+          itsTimeToStop3 = T
+          print("Me salgo porque he minimizado por debajo del umbral")
+        }            
+        
+        xs = c(xs, nIter)
+        ys = c(ys, func(x,y))
+        nIter = nIter + 1
+    }
+    if(pintarGr){
+        pts = cbind(xs,ys)
+        #pintar(puntos = pts, funcion = func, intervalo=c(-2,2), colores="red",
+        #    verFuncion=T, nombreGrafica=nombre)
+        plot(pts, type = "l")
+    }
+    if(!showIter)
+        c(func(x,y),x, y)
+    else
+        c(func(x,y),x, y, nIter)
+}
+```
+
+En la función, calculamos el método de Newton para minimizar la función, es decir, hacer que $\nabla f(x) = 0$. Para esto, realizamos el proceso iterativo del bucle haciendo que los pesos se actualicen de esta manera:
+\begin{equation}
+  xy = \left(
+\begin{matrix}
+  x''_{x} & y''_x \\
+  x''_{y} & y''_y
+ \end{matrix}
+ \right)\times\left(
+ \begin{matrix}
+  x'_x \\
+  y'_y
+ \end{matrix}
+ \right)
+\end{equation}
+
+
+Teniendo las coordenadas que obtenemos con la segunda derivada como una matriz, podemos obtener las nuevas coordenadas como la diferencia de la coordenada anterior con el resultado de la operación anterior, quedando lo siguiente:
+
+\begin{equation*}
+\begin{matrix}
+  x_{new} = x_{old} - xy_{1,1}\\
+  y_{new} = y_{old} - xy_{2,1}
+\end{matrix}
+\end{equation*}
+
+Con esto, el método de Newthon minimizará la función mientras que no hayamos encontrado un ``mínimo local'' o \textit{flat zone}, hayamos llegado al máximo de iteraciones, o hayamos minimizado más que un $\varepsilon$.
+
+Un ejemplo de ejecución para la función del ejercicio 1b es el siguiente, con los parámetros por defecto:
+```{r,echo=T}
+newtonMethod(func = fb, pintarGr = T)
+```
+
+En la gráfica, podemos ver como el algoritmo no es capaz de converger en ningún momento, ya que no cumple ninguna de las condiciones de parada, y se ve como el mínimo va ``danzando'' de un punto a otro de la función, hasta que llega al máximo de iteraciones con un valor de 87.62 aproximadamente, para un punto de inicio (0.1,0.1).
+
+Para comparar con los otros algoritmos, vamos a mostrar la curva que realiza este algoritmo, y veremos los resultados más adelante en una tabla. 
+```{r, echo=T}
+newtonMethod(x = 1, y = 1, func = fb, pintarGr = T, nombre = "P. inicio = (1,1)")
+newtonMethod(x = -0.5, y = -0.5, func = fb, pintarGr = T, nombre = "P. inicio = (-0.5,-0.5)")
+newtonMethod(x = -1, y = -1, func = fb, pintarGr = T, nombre = "P. inicio = (-1,-1)")
+```
+| Punto de inicio | $f_{GD}(x,y)$ | iteraciones |$f_{Nw}(x,y)$ | iteraciones |
+|:---------------:|:------|:-|--:|-----------:|
+|(0.1, 0.1)|-1.8200785|17|87.618256|50|
+|(1, 1)|0.5932694|12|2.9004046|4|
+|(-0.5, -0.5)|-1.3324811|13| 0.7254821|4|
+|(-1, -1)|0.5932694|12|2.9004046|4|
+
+Como podemos ver en la tabla, el poder de minimización del método de Newton es un poco menor que el del gradiente descendiente, pero tiene la ventaja de que realiza menos iteraciones que el gradiente descendiente, y nos da un mínimo con cierta calidad, pero muy dependiente del punto de inicio de la función.
