@@ -468,3 +468,88 @@ newtonMethod(x = -1, y = -1, func = fb, pintarGr = T, nombre = "P. inicio = (-1,
 |(-1, -1)|0.5932694|12|2.9004046|4|
 
 Como podemos ver en la tabla, el poder de minimización del método de Newton es un poco menor que el del gradiente descendiente, pero tiene la ventaja de que realiza menos iteraciones que el gradiente descendiente, y nos da un mínimo con cierta calidad, pero muy dependiente del punto de inicio de la función.
+
+## Regresión Logística
+\sffamily\bfseries
+En este ejercicio crearemos nuestra propia función objetivo $f$ (probabilidad en este caso) y nuestro conjunto de datos $\mathcal{D}$ para ver cómo funciona regresión logística. Supondremos por simplicidad que $f$ es una probabilidad con valores 0/1 y por tanto que y es una función determinista de $x$. 
+Consideremos $d = 2$ para que los datos sean visualizables, y sea $\mathcal{X} = [-1, 1]\times[-1, 1]$ con probabilidad uniforme de elegir cada $x \in \mathcal{X}$ . Elegir una línea en el plano como la frontera entre $f(x)=1$ (donde $y$ toma valores $+1$) y $f (x) = 0$ (donde $y$ toma valores $-1$), para ello seleccionar dos puntos aleatorios del plano y calcular la línea que pasa por ambos.
+
+Seleccionar $N = 100$ puntos aleatorios $\{x_n\}$ de $\mathcal{X}$ y evaluar las respuestas de todos ellos $\{y_n\}$ respecto de la frontera elegida.
+
+\begin{enumerate}[a)]
+\item Implementar Regresión Logística(RL) con Gradiente Descendente Estocástico (SGD) bajo las siguientes condiciones:
+\begin{itemize}
+  \item Inicializar el vector de pesos con valores 0.
+  \item Parar el algoritmo cuando $||w^{(t-1)} - w^{(t)} || < 0,01$, donde $w^{(t)}$ denota el vector de pesos al final de la época $t$. Una época es un pase completo a través de los $N$ datos.
+  \item Aplicar una permutación aleatoria de $1, 2,\ldots, N$ a los datos antes de usarlos en cada época del algoritmo.
+  \item Usar una tasa de aprendizaje de $\eta = 0,01$
+\end{itemize}
+\item Usar la muestra de datos etiquetada para encontrar g y estimar Eout (el error de \textbf{entropía cruzada}) usando para ello un número suficientemente grande de nuevas muestras.
+\end{enumerate}
+\normalfont
+
+```{r, echo=TRUE}
+recta=simula_recta(dim=-1:1,verPunto=F)
+
+logisticRegression <- function(eta = 0.01, max_iter=50, 
+    X = simula_unif(N=100, dim=2, rango=-1:1)) {
+    w_old = c(1,1,1) # inicializamos el vector de pesos
+    w_new = c(0,0,0)
+
+    fp <- function(x,y) y - x*recta[1] - recta[2]
+    f <- function(eval) eval[2] - recta[1]*eval[1] - recta[2]
+    # evaluamos los puntos con respecto de la recta elegida
+    Y = evaluaPuntos(puntos=X, func=f)
+    # añadimos a la matriz X una tercera columna para poder hacer el producto vectorial
+    i = 0
+    YX = cbind(Y,X)
+    # parada: modulo de la diferencia de los dos vectores
+    while ((norm(as.matrix(w_old-w_new),type="F") >= 0.01 | 
+        norm(as.matrix(w_new),type="F") >= 0.01) & i < max_iter) {
+        i = i + 1
+        # hacemos una permutación aleatoria de los datos
+        w_old = w_new
+        sum_W = 0
+        YX = YX[sample.int(nrow(YX)),]
+        
+        for (j in 1:nrow(YX)) {
+            # calculamos el gradiente de error para cada punto con la fórmula
+            # de la página 98 del libro de teoría
+            aux = as.numeric(YX[j,])%*%(w_new)
+            # actualizamos el peso usando la probabilidad de error de ese punto
+            w_new = w_new - eta/nrow(YX) * (-as.numeric(YX[j,])/(1+exp(aux)))
+        }
+
+    }
+    pintar(puntos = X, funcion = fp, colores=Y+3, intervalo = -1:1, nombreGrafica="SLRG", 
+    verFuncion = T, aniadir=FALSE, colFunc = "black")
+
+    # Devolvemos los pesos y las iteraciones
+    w_new
+}
+```
+
+En el caso de la regresión logística, la función recibe una serie de puntos, que en cada generación, ajustará los pesos con cada dato. Cuando se cumpla alguna de las condiciones de parada, el algoritmo parará y delverá los pesos encontrados por la regresión. 
+
+Un ejemplo de ejecución es el siguiente:
+
+```{r}
+w = logisticRegression()
+```
+
+En la imagen podemos ver cómo la regresión logística es capaz de separar datos que son linealmente separables sin problemas.
+
+Para calcular la entropía cruzada, tenemos la siguiente función:
+
+```{r}
+crossEntropyError <- function(w, X = simula_unif(N=100, dim=2, rango=-1:1), 
+    func = function(eval) eval[2] - recta[1]*eval[1] - recta[2]){
+    Y = evaluaPuntos(puntos=X,func=func)
+    X = cbind(Y, X)
+    mean(apply(X = X, FUN = function(d) log(1 + exp(-d%*%w)), MARGIN=1))
+}
+
+crossEntropyError(w)
+```
+
+Esta función se encarga de dado los pesos y los puntos para el cálculo del error, de evaluar los puntos con la función aprendida, y realizar el cálculo del error siguiendo lo siguiente: $$E_{in}(w) = \frac{1}{N}\sum_{n=1}^N\ln\left(1+e^{-y_nw^Tx_n}\right)$$En ella podemos ver el valor que tenemos de entropía cruzada, que es de 0.69 aproximadamente, es decir, $E_{out} = 0,69$
