@@ -553,3 +553,40 @@ crossEntropyError(w)
 ```
 
 Esta función se encarga de dado los pesos y los puntos para el cálculo del error, de evaluar los puntos con la función aprendida, y realizar el cálculo del error siguiendo lo siguiente: $$E_{in}(w) = \frac{1}{N}\sum_{n=1}^N\ln\left(1+e^{-y_nw^Tx_n}\right)$$En ella podemos ver el valor que tenemos de entropía cruzada, que es de 0.69 aproximadamente, es decir, $E_{out} = 0,69$
+
+## Clasificación de Dígitos
+\sffamily\bfseries
+Considerar el conjunto de datos de los dígitos manuscritos y seleccionar las muestras de los dígitos 1 y 5. Usar los ficheros de entrenamiento (training) y test que se proporcionan. Extraer las características de \textbf{intensidad promedio} y \textbf{simetría} en la manera que se indicó en el ejercicio 3 del trabajo 1.
+
+Plantear un problema de clasificación binaria que considere el conjunto de entrenamiento como datos de entrada para aprender la función $g$. Usando el modelo de Regresión Lineal para clasificación seguido por PLA-Pocket como mejora. Responder a las siguientes cuestiones.
+
+\begin{enumerate}
+ \item Generar gráficos separados (en color) de los datos de entrenamiento y test junto con la función estimada.
+ \item Calcular $E_{in}$ y $E_{test}$ (error sobre los datos de test).
+ \item Obtener cotas sobre el verdadero valor de Eout. Pueden calcularse dos cotas una basada en Ein y otra basada en Etest. Usar una tolerancia $\delta = 0,05$. ¿Qué cota es mejor?
+ \item  Repetir los puntos anteriores pero usando una transformación polinómica de tercer orden ($\Phi_3 (x)$ en las transparencias de teoría).
+ \item  Si tuviera que usar los resultados para dárselos a un potencial cliente ¿usaría la transformación polinómica? Explicar la decisión.
+\end{enumerate}
+\normalfont
+
+Para realizar el ejercicio, nos hemos basado en las funciones para leer un fichero de la práctica anterior, más aquellas que calculan la media y simetría de los distintos dígitos. Tras esto, realizamos la regresión lineal para separar los puntos y obtendremos unos pesos $\omega$. Estos pesos, se pasarán como entrada al PLA pocket y obtendremos la separación que se ve en en el siguiente gráfico, en 3 iteraciones.
+
+```{r}
+g = readFile()
+mediaSim = intensityAndSymmetry(g[[2]])
+etiquetas = g[[1]]
+etiquetas[etiquetas == 1] = "blue"
+etiquetas[etiquetas == -1] = "red"
+
+reg=Regress_Lin_Effic(mediaSim[,2], mediaSim[,1])
+
+par(bg="lightcyan")
+plot(mediaSim,xlab="Intensidad Promedio",ylab="Simetria",
+     pch=19,col=etiquetas, main="Datos de Entrenamiento")
+perceptron = PLA(datos = mediaSim, label = g[[1]], vini = c(reg,1),
+            verRecorrido = F)
+print(perceptron)
+abline(a=perceptron[2], b=perceptron[3],col="black",lwd=3)
+```
+
+Aquí podemos ver los datos para el conjunto de datos de \textit{train}, mientras que los de \textit{test}, los podemos ver a continuación.
