@@ -185,37 +185,6 @@ Para realizar el gradiente de la función del apartado 1, tenemos que realizar l
 Una vez que tenemos las derivadas, podemos hacer una implementación del gradiente descendiente para esta función, usando las derivadas calculadas anteriormente, junto con la función inicial. Esta versión la podemos ver a continuación:
 \end{enumerate}
 
-# Modelos Lineales
-
-## Gradiente Descendente. Implementar el algoritmo de gradiente descendiente.
-
-\sffamily\bfseries
-
-\begin{enumerate}[a)]
-  \item Considerar la función no lineal de error $E(u, v) = (ue^v - 2ve^{-u})^2$. Usar gradiente descendente y minimizar esta función de error, comenzando desde el punto (u, v) = (1, 1) y usando una tasa de aprendizaje $\eta = 0,1$.
-  \begin{enumerate}[1)]
-    \item Calcular analíticamente y mostrar la expresión del gradiente de la función $E(u, v)$.
-    \item ¿Cuántas iteraciones tarda el algoritmo en obtener por primera vez un valor de $E(u, v)$ inferior a $10^{-14}$ . (Usar flotantes de 64 bits).
-    \item ¿Qué valores de $(u, v)$ obtuvo en el apartado anterior cuando alcanzo el error de $10^{-14}$.
-  \end{enumerate}
-  \item Considerar ahora la función $f(x,y) = x^2 + 2y^2 + 2\cdot\sin(2\pi x)\sin(2\pi y)$.
-  \begin{enumerate}
-    \item Usar gradiente descendente para minimizar esta función. Usar como valores iniciales $x_0= 1$, $y_0=1$, la tasa de aprendizaje $\eta = 0.01$ y un máximo de 50 iteraciones. Generar un gráfico de cómo desciende el valor de la funión con las iteraciones. Repetir el experimento pero usando $\eta = 0.1$, comentar las diferencias.
-    \item Obtener el valor mínimo y los valores de las variables que lo alcanzan cuando el punto de inicio se fija: (0.1,0.1), (1,1),(-0.5,-0.5), (-1,-1). Generar una tabla con los valores obtenidos. ¿Cuál sería su conclusión sobre la verdadera dificultad de encontrar el mínimo global de una función arbitraria?
-  \end{enumerate}
-\end{enumerate}
-\normalfont
-Para realizar el gradiente de la función del apartado 1, tenemos que realizar las derivadas parciales de la función $E(u, v) = (ue^v - 2ve^{-u})^2$. Para ello, derivamos en función de $u$ y en función de $v$, obteniendo las siguientes expresiones:
-  \begin{displaymath}
-    E'(u) = 2(ue^v - 2ve^{-u})\cdot(e^v + 2ve^{-u})
-  \end{displaymath}
-  \begin{displaymath}
-    E'(v) = 2(ue^v - 2ve^{-u})\cdot (ue^v - 2e^{-u})
-  \end{displaymath}
-  
-Una vez que tenemos las derivadas, podemos hacer una implementación del gradiente descendiente para esta función, usando las derivadas calculadas anteriormente, junto con la función inicial. Esta versión la podemos ver a continuación:
-\end{enumerate}
-
 ```{r gradDesc,echo=T}
 du <- function(u,v) 2*(u*exp(v) - 2*v*exp(-u))*(exp(v)+2*v*exp(-u))
 dv <- function(u,v) 2*(u*exp(v) - 2*v*exp(-u))*(u*exp(v)-2*exp(-u))
@@ -254,6 +223,55 @@ gradienteDescAnalitico <- function(x = 1,y = 1, eta = 0.1,
 
 ```
 
+En el resultado de la función, podemos ver el valor del punto en las coordenadas $x$ e $y$ en la función, junto con los valores de $x$ e $y$.
+
+Para ver el número de iteraciones y el resultado del gradiente descendiente, podemos llamar a la función con el parámetro \verb*|showIter| con valor \textit{True} y obtendremos un resultado como el que se ve a continuación:
+
+```{r gradDescExe, echo=TRUE}
+gradienteDescAnalitico(showIter = T)
+```
+
+Además, para comprobar que se ha calculado bien, existe un paquete llamado \texttt{Deriv}, que se usa para derivar funciones. Usando esto, he creado la siguiente función que recibe una función y la minimiza usando gradiente descendiente, gracias al paquete \texttt{Deriv}.
+\end{enumerate}
+
+```{r echo=TRUE}
+gradDesc <- function(x = 1,y = 1, eta = 0.1, func,
+    prec=10^(-14), maxIter = 50, showIter = F, 
+    pintarGr=F, nombre="Gradiente Descendente"){
+    df = Deriv(f=func,x=formalArgs(func))
+    xOld = 0
+    yOld = 0
+    nIter = 0
+    # Estas listas contendrán los puntos que va encontrando
+    # el gradiente durante el algoritmo
+    xs = c()
+    ys = c()
+    while (abs(df(x,y)[1]) > prec & nIter < maxIter & 
+        abs(x - xOld) > prec){
+        xOld = x
+        yOld = y
+        # Insertamos los puntos al final
+        xs = c(xs, x)
+        ys = c(ys, y)
+        newValues = df(xOld,yOld)
+        x = xOld - eta*newValues[1]
+        y = yOld - eta*newValues[2]
+        nIter = nIter+1
+    }
+    # Generamos la matriz de puntos
+    if(pintarGr){
+      # Si el flag pintarGr está a True, se pintan los puntos
+      pts = cbind(xs,ys)
+      pintar(puntos = pts, funcion = func, intervalo=c(-2,2), colores="red",
+            verFuncion=T, nombreGrafica=nombre, k=1:20)
+    }
+        
+    if(!showIter)
+        c(func(x,y),x, y)
+    else
+        c(func(x,y),x, y, nIter)
+}
+```
 Para ejecutar este algoritmo, realizamos la siguiente llamada para calcular el gradiente a la función anterior y como podemos ver, el resultado es el mismo, y converge en el mismo número de iteraciones.
 ```{r, echo=T}
 gradDesc(func=fo,prec=10^(-14),showIter = T)
@@ -435,7 +453,6 @@ En la función, calculamos el método de Newton para minimizar la función, es d
  \right)
 \end{equation}
 
-
 Teniendo las coordenadas que obtenemos con la segunda derivada como una matriz, podemos obtener las nuevas coordenadas como la diferencia de la coordenada anterior con el resultado de la operación anterior, quedando lo siguiente:
 
 \begin{equation*}
@@ -570,7 +587,6 @@ Plantear un problema de clasificación binaria que considere el conjunto de entr
 \normalfont
 
 Para realizar el ejercicio, nos hemos basado en las funciones para leer un fichero de la práctica anterior, más aquellas que calculan la media y simetría de los distintos dígitos. Tras esto, realizamos la regresión lineal para separar los puntos y obtendremos unos pesos $\omega$. Estos pesos, se pasarán como entrada al PLA pocket y obtendremos la separación que se ve en en el siguiente gráfico, en 3 iteraciones.
-
 ```{r}
 g = readFile()
 mediaSim = intensityAndSymmetry(g[[2]])
@@ -590,3 +606,188 @@ abline(a=perceptron[2], b=perceptron[3],col="black",lwd=3)
 ```
 
 Aquí podemos ver los datos para el conjunto de datos de \textit{train}, mientras que los de \textit{test}, los podemos ver a continuación.
+
+```{r}
+# Cargamos el fichero de test
+gTest = readFile(fileName = "./DigitosZip/zip.test")
+# Calculamos la media y la simetría de los datos
+mediaSimTest = intensityAndSymmetry(gTest[[2]])
+# Y usamos las etiquetas para dar color a los puntos y
+# diferenciarlos en el gráfico
+etiquetasTest = gTest[[1]]
+etiquetasTest[etiquetasTest == 1] = "blue"
+etiquetasTest[etiquetasTest == -1] = "red"
+# Pintamos los putnos
+par(bg="lightcyan")
+plot(mediaSimTest,xlab="Intensidad Promedio",ylab="Simetria",
+     pch=19,col=etiquetasTest,main="Datos de Test")
+abline(a=perceptron[2], b=perceptron[3],col="black",lwd=3)
+```
+
+Como podemos ver, el algoritmo ha aprendido bastante bien y el error de test es bastante pequeño a simple vista, pero podemos analizarlo más en profundidad. Para calcular el error dentro de la muestra, calcularemos el error dentro de la muestra como:
+\begin{displaymath}
+  E_{in}(w) = \frac{1}{N}\sum_{n=1}^N(w^Tx_n-y_n)^2
+\end{displaymath}
+\begin{displaymath}
+  \quad= \frac{1}{N}||Xw-y||^2
+\end{displaymath}
+\begin{displaymath}
+  \quad\qquad\qquad\qquad\qquad= \frac{1}{N}(w^TX^TXw-2w^TX^Ty + y^Ty)
+\end{displaymath}
+
+En resumen, el error dentro de la muestra se calcula como la norma de la diferencia de los puntos multiplicados por los pesos y las etiquetas. Para calcular el error fuera de la muestra, partiremos del error calculado dentro de la muestra. Este error fuera de la muestra o $E_{out}$ se obtiene como $$E_{out} = E_{in} + \mathcal{O}\Big(\frac{d}{N}\Big)$$
+donde $d$ es la dimensión VC y $N$ el tamaño del conjunto de datos.
+
+```{r}
+# Función para calcular el error fuera de la muestra
+calcularEout <- function(ein, datos, tam){
+    Eout = ein + (ncol(datos))/tam
+    Eout
+}
+
+# Función para calcular el error dentro de la muestra
+calcularEin <- function(X, wlin, y){
+    errorIN = (t(wlin)%*%t(X)%*%X%*%wlin - 2*t(wlin)%*%t(X)%*%y + t(y)%*%y)
+}
+
+y_g = g[[1]]
+y_test = gTest[[1]]
+
+datos=cbind(mediaSim,y_g)
+ein = apply(X=datos, FUN=function(dato) 
+  calcularEin(X=cbind(dato[1],dato[2]), wlin = reg, y = dato[3]),MARGIN=1)
+Ein_train=mean(ein)
+Eout_train=calcularEout(Ein_train, datos, nrow(datos))
+cat("Ein para datos de train = ",Ein_train,"\n")
+cat("Eout para datos de train = ",Eout_train,"\n")
+
+datosTest=cbind(mediaSimTest,y_test)
+einT = apply(X=datos, FUN=function(dato) 
+  calcularEin(X=cbind(dato[1],dato[2]), wlin = reg, y = dato[3]),MARGIN=1)
+Ein_Test=mean(einT)
+Eout_Test=calcularEout(Ein_Test, datosTest, nrow(datosTest))
+cat("Ein para datos de test = ",Ein_Test,"\n")
+cat("Eout para datos de test = ",Eout_Test,"\n")
+```
+
+Como podemos ver, para los datos de entrenamiento, tenemos que $E_{in} = 0,8405077$ y $E_{out} = 0,8455161$, y para los datos de test, tenemos que $E_{in} = 0,8405077$ y $E_{out} = 0,9017322$.
+
+Para el cálculo de las cotas, tenemos que recurrir a la siguiente expresión: $$E_{out} \leq E_{in}(g) + \sqrt{\frac{8}{N}\ln\left(\frac{4m_{\mathcal{H}}(2N)}{\delta}\right)}$$ Si usamos el límite polinómico basado en la dimensión de Vapnik–Chervonenkis, obtenemos la siguiente expresión, similar a la anterior, pero también válida para calcular el error fuera de la muestra $$E_{out} \leq E_{in}(g) + \sqrt{\frac{8}{N}\ln\left(\frac{4(2N)^{d_{VC}}+1}{\delta}\right)}$$
+
+Como en los modelos lineales, la dimensión VC es 3, podemos simplificar un poco la expresión y desarrollar la siguiente función en R, capaz de calcular este error
+
+```{r}
+EoutBound <- function(Ein, N, delta = 0.05, d = 3){
+    Eout = Ein + sqrt( (8/N) * log( (4*(2*N)^(d+1) + 1)/delta) )
+    Eout
+}
+```
+
+Con esto, vamos a ver qué error obtenemos con los datos de entrenamiento y los datos de test.
+
+```{r}
+cat("Eout real para datos de train = ",EoutBound(Ein_train, nrow(datos)),"\n")
+cat("Eout real para datos de train = ",EoutBound(Ein_Test, nrow(datosTest)),"\n")
+```
+
+Con esto, podemos ver que los resultados para los datos de entrenamiento son $E_{out} = 1,425772$, y para los datos de test, $E_{out} = 2,561302$. Podemos ver que el error, es bastante bueno para usar un modelo lineal, y hemos conseguido ajustar un buen modelo, que se comporta bien tanto dentro, como fuera de la muestra.
+
+# Sobreajuste
+\sffamily\bfseries
+Vamos a construir un entorno que nos permita experimentar con los problemas de sobreajuste. Consideremos el espacio de entrada $\mathcal{X} = [-1, 1]$ con una densidad de probabilidad uniforme, $\mathbb{P}(x) = \frac{1}{2}$ . Consideramos dos modelos $\mathcal{H}_2$ y $\mathcal{H}_{10}$ representando el conjunto de todos los polinomios de grado 2 y grado 10 respectivamente. La función objetivo es un polinomio de grado $Q_f$ que escribimos como $f(x)=\sum_{q=0}^{Q_f}a_qL_q(x)$, donde $L_q(x)$ son los polinomios de Legendre (ver la relación de ejercicios.2). El conjunto de datos es $\mathcal{D} = {(x_1, y_1),\ldots, (x_N , y_N )}$ donde $y_n = f(x_n) + \sigma\cdot \epsilon_n$ y las $\{\epsilon_n\}$ son variables aleatorias i.i.d. $\mathcal{N}(0,1)$ y $\sigma^2$ la varianza del ruido.
+Comenzamos realizando un experimento donde suponemos que los valores de $Q_f$, $N$, $\sigma$, están especificados, para ello:
+\begin{itemize}
+\item Generamos los coeficientes $a_q$ a partir de muestras de una distribución $\mathcal{N}(0,1)$ y escalamos dichos coeficientes de manera que $\mathbb{E}_{a,x} [f^2] = 1$ (Ayuda: Dividir los coeficientes por $\sqrt{\sum_{q=0}^{Q_f} \frac{1}{2q+1}}$).
+\item Generamos un conjunto de datos, $x_1 ,\ldots,x_N$ muestreando de forma independiente $\mathbb{P}(x)$ y los valores $y_n = f(x_n) + \sigma\epsilon_n$.
+\end{itemize}
+Sean $g_2$ y $g_{10}$ los mejores ajustes a los datos usando $\mathcal{H}_2$ y $\mathcal{H}_{10}$ respectivamente, y sean $E_{out}(g_2)$ y $E_out(g_{10})$ sus respectivos errores fuera de la muestra.
+\begin{enumerate}[a)]
+\item Calcular $g_2$ y $g_{10}$
+\item ¿Por qué normalizamos $f$? (Ayuda: interpretar el significado de $\sigma$).
+\item ¿Cómo podemos obtener $E_{out}$ analíticamente para una $g_{10}$ dada?
+\end{enumerate}
+\normalfont
+Para el desarrollo del ejercicio, he creado la siguiente función en código R, que generará todo lo necesario para el ejercicio.
+```{r}
+sobreajuste <- function(intervalo=-1:1, prob=0.5, N=100, sigma=1, Qf=15, ejercicio1=TRUE) {
+    # Calculamos los coeficientes pertenecientes a la 
+    # distribución de probabilidad con media = 1/2
+    aq = as.vector(simula_gaus(N=Qf+1, dim=1, sigma=1))
+    # Aplicamos a los coeficientes la siguiente función
+    #
+    #                        a
+    #    a =   ----------------------------
+    #               ----------------------
+    #              /  ---- Qf      1
+    #             /   \        ---------
+    #            V    /___ q=0   2q+1
+    # 
+    d = sqrt(sum(sapply(X=0:Qf, FUN=function(q) 1/(2*q+1))))
+    aq = aq/d
+    # Y realizamos el cálculo de la función objetivo, que consiste en
+    #
+    #              ---- Qf  
+    #        f =   \         aqLq(x)
+    #              /___ q=0 
+    #     
+    legendre = legendre.polynomials(n=Qf, normalized=T) # generamos los 20 primeros
+    f = legendre[[1]]*aq[1]
+    for (i in 2:length(legendre)) 
+        f = f + legendre[[i]] * aq[i]
+    # generamos los datos
+    x = as.vector(simula_unif(N=N, dim=1, rango=intervalo))
+    # generamos epsilon para meter ruido
+    eps = as.vector(simula_gaus(N=N, dim=1, sigma=0.5))
+    # Generamos la función objetivo
+    Y = sapply(X=x, FUN=as.function(f))
+    # 2. le sumamos a los Y calculados, sigma*epsilon
+    yn = mapply(FUN=function(valor, en) valor + sigma*en, valor=Y, en=eps)
+    # generamos la matriz de datos
+    datos = cbind(x, yn)
+    # Transformamos los datos para realizar la regresión
+    datos_predecir = poly(x, degree=Qf)
+    # Realizamos la regresión para g2 y g10
+    model.g2 <- lm(yn ~ poly(x, degree=2),data=datos_predecir)
+    model.g10 <- lm(yn ~ poly(x, degree=10),data=datos_predecir)
+    # Almacenamos los pesos
+    w2 = as.vector(model.g2$'coefficients')
+    w10 = as.vector(model.g10$'coefficients')
+    # Calculamos el error dentro de la muestra, similar al 
+    # error de entropía  cruzada 
+    EinNL <- function(datos, w, etiquetas){
+        w=as.matrix(w)
+        datos = cbind(rep(1, nrow(datos)), datos)
+        y_z = apply(X=datos, FUN=function(dato) t(w)%*%dato, MARGIN=1)
+        mean(mapply(FUN = function(yz, y) log(1 + exp(-y * yz)), yz = y_z, y = etiquetas))
+
+    }
+    # Calculamos los errores dentro de la muestra
+    eing2 = EinNL(poly(x, degree=2), w2, yn)
+    eing10 = EinNL(poly(x, degree=10), w10, yn)
+    # Y los errores fuera de la muestra
+    eoutg2 = EoutBound(eing2, N=nrow(datos), delta = 0.05, d = ncol(poly(x,degree=2)))
+    eoutg10 = EoutBound(eing10, N=nrow(datos), delta = 0.05, d = ncol(poly(x,degree=10)))
+    
+    if(ejercicio1){
+        cat("Ein_g2 = ",eing2,"\tEout_g2 = ",eoutg2,"\n")
+        cat("Ein_g10 = ",eing10,"\tEout_g10 = ",eoutg10,"\n")
+        cat("Eout_g2 - Eout_g10 = ", eoutg2 - eoutg10,"\n")
+
+        (ggplot() + geom_point(data=as.data.frame(datos), aes(x=x, y=yn)) 
+          + geom_line(aes(x=x, y=predict(model.g2), color="g2")) 
+          + geom_line(aes(x=x, y=predict(model.g10), color="g10")))
+    }
+    else
+            l = c(eing2, eoutg2, eing10, eoutg10)
+}
+
+sobreajuste()
+```
+
+La función generará las coeficiente y los escalará siguiendo lo que se dice en el enunciado. Tras esto, usando el paquete \textbf{\textit{orthopolynom}}, generamos los polinomios de Legendre normalizados, para, realizando la suma de los polinomios, obtener la función objetivo que queremos obtener, a la que posteriormente, añadiremos el ruido a la función.
+
+Tras esto, evaluamos los puntos que hemos sacado aleatoriamente para obtener las etiquetas reales. Una vez hecho esto, realizamos la regresión con la transformación de los datos para obtener los pesos, y pasamos a calcular los errores dentro de la muestra para el modelo $g_2$ y el modelo $g_{10}$.
+
+Como podemos ver, dentro de la muestra, $g_{10}$ se comporta mejor que $g_2$, debido a que $E_{in_{g_{10}}} < E_{in_{g_2}}$, por lo que se ajusta mejor a los datos. Pero, al calcular el error fuera de la muestra, vemos que si realizamos la diferencia de $E_{in_{g_2}} - E_{in_{g_{10}}}$ vemos que es menor que 0. Esto significa que $g_{10}$ es tan bueno dentro de la muestra que está sobreajustando los datos, con lo que el comportamiento fuera de la muestra será peor.
+
+Respecto a por qué normalizar $f$, tenemos que en la función objetivo, existe un ruido $\sigma$ que afecta a la función. Normalizando la función, podemos hacer que el ruido sea ``el mismo'' para poder acotarlo y ajustar bien la función sin que la aleatoriedad del ruido nos afecte a la función. Con esto controlamos el ruido estocástico de la función.
