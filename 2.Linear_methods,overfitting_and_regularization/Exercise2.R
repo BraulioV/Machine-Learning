@@ -501,3 +501,20 @@ ejercicio3 <- function(N = 100, varianza = 1, lambda = 0.5, d = 2){
 cve = ejercicio3()
 print(cve)
 pause()
+
+ejercicio3b <- function(times=1000) {
+    resultados = matrix(ncol=6, nrow=times)
+
+    for (i in 1:times) {
+        l = ejercicio3()
+        resultados[i,] = c(mean(l[[1]]), var(l[[1]]), 
+            mean(l[[2]]), var(l[[2]]),mean(l[[3]]), var(l[[3]]))
+    }
+
+    colnames(resultados)=c("Media Ecv", "Varianza Ecv", "Media e_1", 
+        "Varianza e_1", "Media e_2", "Varianza e_2")
+    resultados
+}
+
+print(ejercicio3b())
+pause()
