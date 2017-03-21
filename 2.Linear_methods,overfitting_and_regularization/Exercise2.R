@@ -434,3 +434,70 @@ sobreajuste <- function(intervalo=-1:1, prob=0.5, N=100, sigma=1, Qf=15, ejercic
 
 print(sobreajuste())
 pause()
+
+#------------------------------------------------------------------------------
+#  EJERCICIO 2.2
+#------------------------------------------------------------------------------
+
+ejercicio22 <- function(){
+    EoutH2 = c()
+    EoutH10 = c()
+    
+    for(i in 1:150){
+        l = sobreajuste (intervalo=-1:1, prob=0.5, N=50, sigma=1, Qf=15, ejercicio1=F)
+        # Insertamos los errores fuera de la muestra en cada una de las listas
+        EoutH2 = c(l[[2]],EoutH2)
+        EoutH10 = c(l[[4]],EoutH10)
+    }
+    # Restamos las medias de los errores para los dos modelos
+    mean(EoutH10) - mean(EoutH2)
+}
+
+print(ejercicio22())
+pause()
+
+# Función para implementar la regresión con "weight decay"
+weightDecay <- function(datos, y, lambda = 0.05/nrow(datos)){
+    beta = solve(t(datos)%*%datos+lambda*diag(ncol(datos)))%*%t(datos)%*%y   
+}
+
+# Función para calcular el error cuadrático
+EinSquareError<-function(w, x, y){
+    w=as.matrix(w)
+    (t(w)*x-y)*(t(w)*x-y)
+}
+
+ejercicio3 <- function(N = 100, varianza = 1, lambda = 0.5, d = 2){
+    # Generamos el vector aleatorio de pesos
+    w = as.vector(simula_gaus(N=1, dim=d+1, sigma = 1))
+    # Y una lista vacía para almacenar los errores
+    CVErrorsList = c()
+    e1 = c()
+    e2 = c()
+    # La lista (d+15,d+25,...,d+115)
+    Ns = seq(from = 15, to = 115, by = 10)
+    # Iniciamos la validación cruzada
+    for (i in Ns){
+        # Con el nuevo conjunto de datos de tamaño Ns_i + d
+        n = i+d
+        # Generamos una nueva muestra, el ruido y los evaluamos en función
+        # de los pesos que tenemos
+        newDS = simula_gaus(N=n, dim=d, sigma = 1)
+        newDSaux=cbind(rep(1,n),newDS)
+        epsilon = as.vector(simula_gaus(N=n, dim=1, sigma=1))
+        ynDS = apply(X = newDSaux, FUN = function(dato) dato%*%w,MARGIN=1)
+        ynDS = mapply(FUN=function(e,y) y + e*lambda/n, e = epsilon, y=ynDS)
+        # Tras esto, aplicamos la validación cruzada e insertamos el error
+        # en la lista CVErrorsList
+        ei = sapply(X=1:n,FUN=function(k) EinSquareError(
+            as.vector(weightDecay(newDSaux[-k,],ynDS[-k])), 
+            x=newDSaux[k,], y = ynDS[k]))
+        CVErrorsList = c(mean(ei), CVErrorsList)
+        e1 = c(ei[1],e1)
+        e2 = c(ei[2],e2)
+    }
+    list(CVErrorsList,e1,e2)
+}
+cve = ejercicio3()
+print(cve)
+pause()
