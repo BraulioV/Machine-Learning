@@ -438,6 +438,7 @@ newtonMethod <- function(x = 0.1, y = 0.1,prec=10^{-14},
 }
 ```
 
+
 En la función, calculamos el método de Newton para minimizar la función, es decir, hacer que $\nabla f(x) = 0$. Para esto, realizamos el proceso iterativo del bucle haciendo que los pesos se actualicen de esta manera:
 \begin{equation}
   xy = \left(
@@ -791,3 +792,165 @@ Tras esto, evaluamos los puntos que hemos sacado aleatoriamente para obtener las
 Como podemos ver, dentro de la muestra, $g_{10}$ se comporta mejor que $g_2$, debido a que $E_{in_{g_{10}}} < E_{in_{g_2}}$, por lo que se ajusta mejor a los datos. Pero, al calcular el error fuera de la muestra, vemos que si realizamos la diferencia de $E_{in_{g_2}} - E_{in_{g_{10}}}$ vemos que es menor que 0. Esto significa que $g_{10}$ es tan bueno dentro de la muestra que está sobreajustando los datos, con lo que el comportamiento fuera de la muestra será peor.
 
 Respecto a por qué normalizar $f$, tenemos que en la función objetivo, existe un ruido $\sigma$ que afecta a la función. Normalizando la función, podemos hacer que el ruido sea ``el mismo'' para poder acotarlo y ajustar bien la función sin que la aleatoriedad del ruido nos afecte a la función. Con esto controlamos el ruido estocástico de la función.
+
+## Medición del sobreajuste
+\sffamily\bfseries
+Siguiendo con el punto anterior, usando la combinación de parámetros $Q_f = 20$, $N = 50$, $\sigma = 1$ ejecutar un número de experimentos $(>100)$ calculando en cada caso $E_out (g_2)$ y $E_out(g_{10})$. Promediar todos los valores de error obtenidos para cada conjunto de hipótesis, es decir $$E_{out}(\mathcal{H}_2) = \text{promedio sobre experimentos}(E_{out}(g_2))$$
+$$E_{out}(\mathcal{H}_{10}) = \text{promedio sobre experimentos}(E_{out}(g_{10}))$$
+Definimos una medida de sobreajuste como $E_{out} (\mathcal{H}_{10}) - E_{out} (\mathcal{H}_2)$.
+\begin{enumerate}
+\item Argumentar por qué la medida dada puede medir el sobreajuste.
+\item Usando la combinación de valores de los valores $Q_f \in \{1, 2,\ldots, 100\}$, $N \in \{20, 25, \ldots , 100\}$, $\sigma \in \{0; 0,05; 0,1; \ldots ; 2\}$, se obtiene una gráfica como la que aparece en la figura 4.3 del libro "Learning from data", capítulo 4. Interpreta la gráfica respecto a las condiciones en las que se da el sobreajuste. (Nota: No es necesario la implementación).
+\end{enumerate}
+\normalfont
+
+Para el apartado 1, he usado el siguiente código:
+
+```{r}
+ejercicio22 <- function(){
+    EoutH2 = c()
+    EoutH10 = c()
+    
+    for(i in 1:150){
+        l = sobreajuste (intervalo=-1:1, prob=0.5, N=50, sigma=1, Qf=15, ejercicio1=F)
+        # Insertamos los errores fuera de la muestra en cada una de las listas
+        EoutH2 = c(l[[2]],EoutH2)
+        EoutH10 = c(l[[4]],EoutH10)
+    }
+    # Restamos las medias de los errores para los dos modelos
+    mean(EoutH10) - mean(EoutH2)
+}
+```
+
+Haciendo uso del ejercicio anterior, realizamos 150 experimentos, para obtener los errores en media de los modelos $\mathcal{H}_2$ y $\mathcal{H}_{10}$, y después realizamos la diferencia de la media de errores de ambos modelos, para medir el sobreajuste. El resultado de esta función lo podemos ver a continuación:
+
+```{r}
+ejercicio22()
+```
+
+Como podemos ver, la diferencia de medias ha salido positiva. Esto quiere decir que el error fuera de la muestra para $\mathcal{H}_{10}$ es mayor que el error de $\mathcal{H}_{2}$. Con esto podemos ver que $\mathcal{H}_{10}$ está sobreajustando el modelo, ya que al ser un modelo más complejo y flexible, puede ajustar los puntos y el ruido que tienen los puntos en la muestra, con lo que el error dentro de la muestra es menor que para $\mathcal{H}_{2}$, mientras que, si nos fijamos en el error fuera de la muestra, $\mathcal{H}_{10}$ trabaja peor que $\mathcal{H}_{2}$. Por lo tanto, cuanto mayor sea esta diferencia (con valor positivo), más sobreajuste produce el modelo $\mathcal{H}_{10}$.
+
+Respecto al apartado b, podemos ver que cuanto mayor sea el nivel de ruido $\sigma$, tendremos un mayor sobreajuste cuanto menor sea el conjunto de datos que tenemos para entrenar, ya que no podemos detectar bien el ruido, teniendo un mayor error estocástico. En la segunda imagen, vemos que cuanto más crece la complejidad del modelo, añadimos ruido determinístico a los datos si no aumentamos el tamaño del conjunto de datos para entrenar.
+
+En resumen, tenemos lo siguiente:
+
+| Número de datos | Ruido | Complejidad del modelo | Sobreajuste |
+|:---------------:|:-----:|:----------------------:|:-----------:|
+| $\uparrow$ | $\rightarrow$ | $\rightarrow$ | $\downarrow$ |
+| $\downarrow$ | $\rightarrow$ | $\rightarrow$ | $\uparrow$ |
+| $\rightarrow$ | $\uparrow$ | $\rightarrow$ | $\uparrow$ |
+| $\rightarrow$ | $\rightarrow$ | $\uparrow$ | $\uparrow$ |
+
+# Regularización y selección de modelos
+
+## Regularización "weight decay"
+
+\sffamily\bfseries
+
+Para $d=3$ (dimensión) generar un conjunto de $N$ datos aleatorios $\{x_,y_n\}$ de la siguiente forma. Para cada punto, $x_n$ generamos sus coordenadas muestreando de forma independiente una $\mathcal{N}(0,1)$. De forma similar generamos un vector de pesos de $d+1$ dimensiones $w_f$, y el conjunto de valores $y_n = w^T_f x_n + \sigma \epsilon_n$, donde $\epsilon_n$ es el ruido que sigue también una $\mathcal{N}(0,1)$ y $\sigma^2$ es la varianza del ruido; fijar $\sigma=0,5$.
+
+Usar regresión lineal con regularización "weight decay" para estimar $w_f$ con $w_{reg}$. Fijar el parámetro de regularización a $0,05/N$.
+\begin{enumerate}[a)]
+\item Para $N \in \{d+15,d+25,\cdots,d+115\}$ calcular los errores $e_1,\cdots,e_N$ de validación cruzada y $E_{cv}$.
+
+\item Repetir el experimento 1000 veces, anotando el promedio y la varianza de $e_1$, $e_2$ y $E_{cv}$ en todos los experimentos.
+
+\item ¿Cuál debería de ser la relación entre el promedio de los valores $e_1$ y el de los valores de $E_{cv}$? ¿y el de los valores de $e_2$? Argumentar la respuesta en base a los resultados de los experimentos.
+
+\item ¿Qué es lo que contribuye a la varianza de los valores de $e_1$?
+
+\item Si los errores de validación-cruzada fueran verdaderamente independientes, ¿cuál sería la relación entre la varianza de los valores de $e_1$ y la varianza de los de $E_{cv}$?
+
+\item Una medida del número efectivo de muestras nuevas usadas en el cálculo de $E_{cv}$ es el cociente entre la varianza de $e_1$ y la varianza de $E_{cv}$. Explicar por qué, y dibujar, respecto de $N$, el número efectiv de nuevos ejemplos ($N_{eff}$) como un porcentaje de $N$. NOTA: Debería de encontrarse que $N_{eff}$ está cercano a $N$.
+
+\item Si se incrementa la cantidad de regularización, ¿debería $N_{eff}$ subir o bajar? Argumentar la respuesta. Ejecutar el mismo experimento con $\lambda = 2.5/N$ y comparar los resultados del punto anterior para verificar la conjetura.
+\end{enumerate}
+\normalfont
+
+\begin{enumerate}[a)]
+\item Para este apartado, he desarrollado la siguiente función
+\end{enumerate}
+```{r}
+# Función para implementar la regresión con "weight decay"
+weightDecay <- function(datos, y, lambda = 0.05/nrow(datos)){
+    beta = solve(t(datos)%*%datos+lambda*diag(ncol(datos)))%*%t(datos)%*%y   
+}
+
+# Función para calcular el error cuadrático
+EinSquareError<-function(w, x, y){
+    w=as.matrix(w)
+    (t(w)*x-y)*(t(w)*x-y)
+}
+
+
+ejercicio3 <- function(N = 100, varianza = 1, lambda = 0.5, d = 2){
+    # Generamos el vector aleatorio de pesos
+    w = as.vector(simula_gaus(N=1, dim=d+1, sigma = 1))
+    # Y una lista vacía para almacenar los errores
+    CVErrorsList = c()
+    e1 = c()
+    e2 = c()
+    # La lista (d+15,d+25,...,d+115)
+    Ns = seq(from = 15, to = 115, by = 10)
+    # Iniciamos la validación cruzada
+    for (i in Ns){
+        # Con el nuevo conjunto de datos de tamaño Ns_i + d
+        n = i+d
+        # Generamos una nueva muestra, el ruido y los evaluamos en función
+        # de los pesos que tenemos
+        newDS = simula_gaus(N=n, dim=d, sigma = 1)
+        newDSaux=cbind(rep(1,n),newDS)
+        epsilon = as.vector(simula_gaus(N=n, dim=1, sigma=1))
+        ynDS = apply(X = newDSaux, FUN = function(dato) dato%*%w,MARGIN=1)
+        ynDS = mapply(FUN=function(e,y) y + e*lambda/n, e = epsilon, y=ynDS)
+        # Tras esto, aplicamos la validación cruzada e insertamos el error
+        # en la lista CVErrorsList
+        ei = sapply(X=1:n,FUN=function(k) EinSquareError(
+            as.vector(weightDecay(newDSaux[-k,],ynDS[-k])), 
+            x=newDSaux[k,], y = ynDS[k]))
+        CVErrorsList = c(mean(ei), CVErrorsList)
+        e1 = c(ei[1],e1)
+        e2 = c(ei[2],e2)
+    }
+    list(CVErrorsList,e1,e2)
+}
+```
+
+En la función, calculamos el \textit{weight decay} o $w_{reg}$ de la siguiente forma:$$w_{reg} = (Z^T Z + \lambda I)^{-1} Z^T y$$. Con este peso que obtenemos, pasamos a calcular el error de validación cruzada, donde para dado un conjunto $\mathcal{D}_n = (x_1,y_1),\ldots,(x_N,y_N)$, entrenamos el model con $N-1$ puntos, y usaremos uno para validar. En concreto, hacemos lo siguiente $$\mathcal{D}_n = (x_1,y_1),\ldots,(x_{n-1},y_{n-1}),\cancel{(x_{n},y_{n})},(x_{n+1},y_{n+1}),\ldots,(x_N,y_N)$$ donde $(x_{n},y_{n})$ es el dato que usaremos para validar la función $g^-$ calculada. 
+
+Con esto, cada función $g^-$ tendrá un error $e_n$, que podemos calcular de la siguiente manera:$$e_n = E_{val}(g^-_n)=e(g^-_n(x_n),y_n)$$. Teniendo esto en cuenta, la validación cruzada lo que hará será calcular el error en media para $g^-$, es decir $$E_{cv} = \frac{1}{N}\sum_{n=1}^N e_n$$
+
+```{r}
+ejercicio3()[1]
+```
+
+En la función devolvemos la lista de errores de validación cruzada para los distintos tamaños de $N$.
+\begin{enumerate}[b)]
+\item En este caso, tenemos el siguiente código
+\end{enumerate}
+```{r}
+ejercicio3b <- function(times=1000) {
+    resultados = matrix(ncol=6, nrow=times)
+
+    for (i in 1:times) {
+        l = ejercicio3()
+        resultados[i,] = c(mean(l[[1]]), var(l[[1]]), 
+            mean(l[[2]]), var(l[[2]]),mean(l[[3]]), var(l[[3]]))
+    }
+
+    colnames(resultados)=c("Media Ecv", "Varianza Ecv", "Media e_1", 
+        "Varianza e_1", "Media e_2", "Varianza e_2")
+    resultados
+}
+
+ejercicio3b(10)
+```
+\begin{enumerate}[c)]
+\item Por simplicidad, se ha realizado el experimento 10 veces, para poder apreciar bien los datos. La relación que existe entre los datos $e_1$, $e_2$ y $E_{cv}$ es bastante fuerte ya que, para evaluar $E_{cv}$, haremos el promedio de las distintas evaluaciones $e_n$. Estas evaluaciones, en el caso de $e_1$, usaremos para aprender todos los puntos menos $(x_1,y_1)$ que lo usaremos para validar. En los puntos que usamos para aprender, se encuentra $(x_2,y_2)$, que en el caso de $e_2$ se usará para validar, mientras que $(x_1,y_1)$ se usará para aprender. Por lo que existe una relación entre ambos en la media del error, siendo parecido el error, y la variabilidad entre los resultados será puede ser grande, al evaluar solo con un dato, mientras que con la validación cruzada lo hacemos con $N$ datos, tal y como se puede ver en los resultados.
+
+\item La varianza puede llegar a ser muy alta, ya que el conjunto de datos que usamos para aprender es bastante pequeño, con lo que el error fuera de la muestra, crecerá bastante, y tendrá una alta variabilidad.
+
+\item Si los datos fueran realmente independientes, obtendríamos una varianza mayor, ya que los resultados dependerían del punto que cojamos, si es completamente aleatorio, pero obtendríamos errores más representativos.
+
+\end{enumerate}
+
