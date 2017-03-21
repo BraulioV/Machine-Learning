@@ -352,3 +352,85 @@ print(newtonMethod(x = -0.5, y = -0.5, func = fb, pintarGr = T, nombre = "P. ini
 pause()
 print(newtonMethod(x = -1, y = -1, func = fb, pintarGr = T, nombre = "P. inicio = (-1,-1)"))
 pause()
+
+#------------------------------------------------------------------------------
+#  EJERCICIO 2
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+#  EJERCICIO 2.1
+#------------------------------------------------------------------------------
+sobreajuste <- function(intervalo=-1:1, prob=0.5, N=100, sigma=1, Qf=15, ejercicio1=TRUE) {
+    # Calculamos los coeficientes pertenecientes a la 
+    # distribución de probabilidad con media = 1/2
+    aq = as.vector(simula_gaus(N=Qf+1, dim=1, sigma=1))
+    # Aplicamos a los coeficientes la siguiente función
+    #
+    #                        a
+    #    a =   ----------------------------
+    #               ----------------------
+    #              /  ---- Qf      1
+    #             /   \        ---------
+    #            V    /___ q=0   2q+1
+    # 
+    d = sqrt(sum(sapply(X=0:Qf, FUN=function(q) 1/(2*q+1))))
+    aq = aq/d
+    # Y realizamos el cálculo de la función objetivo, que consiste en
+    #
+    #              ---- Qf  
+    #        f =   \         aqLq(x)
+    #              /___ q=0 
+    #     
+    legendre = legendre.polynomials(n=Qf, normalized=T) # generamos los 20 primeros
+    f = legendre[[1]]*aq[1]
+    for (i in 2:length(legendre)) 
+        f = f + legendre[[i]] * aq[i]
+    # generamos los datos
+    x = as.vector(simula_unif(N=N, dim=1, rango=intervalo))
+    # generamos epsilon para meter ruido
+    eps = as.vector(simula_gaus(N=N, dim=1, sigma=0.5))
+    # Generamos la función objetivo
+    Y = sapply(X=x, FUN=as.function(f))
+    # 2. le sumamos a los Y calculados, sigma*epsilon
+    yn = mapply(FUN=function(valor, en) valor + sigma*en, valor=Y, en=eps)
+    # generamos la matriz de datos
+    datos = cbind(x, yn)
+    # Transformamos los datos para realizar la regresión
+    datos_predecir = poly(x, degree=Qf)
+    # Realizamos la regresión para g2 y g10
+    model.g2 <- lm(yn ~ poly(x, degree=2),data=datos_predecir)
+    model.g10 <- lm(yn ~ poly(x, degree=10),data=datos_predecir)
+    # Almacenamos los pesos
+    w2 = as.vector(model.g2$'coefficients')
+    w10 = as.vector(model.g10$'coefficients')
+    # Calculamos el error dentro de la muestra, similar al 
+    # error de entropía  cruzada 
+    EinNL <- function(datos, w, etiquetas){
+        w=as.matrix(w)
+        datos = cbind(rep(1, nrow(datos)), datos)
+        y_z = apply(X=datos, FUN=function(dato) t(w)%*%dato, MARGIN=1)
+        mean(mapply(FUN = function(yz, y) log(1 + exp(-y * yz)), yz = y_z, y = etiquetas))
+
+    }
+    # Calculamos los errores dentro de la muestra
+    eing2 = EinNL(poly(x, degree=2), w2, yn)
+    eing10 = EinNL(poly(x, degree=10), w10, yn)
+    # Y los errores fuera de la muestra
+    eoutg2 = EoutBound(eing2, N=nrow(datos), delta = 0.05, d = ncol(poly(x,degree=2)))
+    eoutg10 = EoutBound(eing10, N=nrow(datos), delta = 0.05, d = ncol(poly(x,degree=10)))
+    
+    if(ejercicio1){
+        cat("Ein_g2 = ",eing2,"\tEout_g2 = ",eoutg2,"\n")
+        cat("Ein_g10 = ",eing10,"\tEout_g10 = ",eoutg10,"\n")
+        cat("Eout_g2 - Eout_g10 = ", eoutg2 - eoutg10,"\n")
+
+        (ggplot() + geom_point(data=as.data.frame(datos), aes(x=x, y=yn)) 
+          + geom_line(aes(x=x, y=predict(model.g2), color="g2")) 
+          + geom_line(aes(x=x, y=predict(model.g10), color="g10")))
+    }
+    else
+            l = c(eing2, eoutg2, eing10, eoutg10)
+}
+
+print(sobreajuste())
+pause()
