@@ -327,3 +327,63 @@ abline(0,1,col="blue")
 Eout.rf = mean((pred.rf - datos[-i,]$medv)^2)
 cat("Eout = ", Eout.rf, "\n")
 pause()
+
+## ------------------------------------------------------------------------
+boosting = gbm(medv ~., data=datos[i,], distribution = "gaussian",cv.folds = 10)
+print(summary(boosting))
+pause()
+## ------------------------------------------------------------------------
+pred.boost = predict(boosting , newdata = datos[-i,] , n.trees =boosting$n.trees)
+plot(pred.boost, datos[-i,]$medv)
+abline(0,1,col="green")
+Eout.boosting = mean((pred.boost - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.boosting, "\n")
+pause()
+## ------------------------------------------------------------------------
+gbm.perf(boosting, oobag.curve = T, method="cv")
+pause()
+## ------------------------------------------------------------------------
+boosting.model2 = gbm(medv ~., data=datos[i,], distribution = "gaussian",
+    cv.folds = 10, n.trees = 15000, interaction.depth = floor(sqrt(ncol(datos))))
+print(summary(boosting.model2))
+pause()
+pred.boost.2 = predict(boosting.model2, newdata = datos[-i,] , n.trees =boosting.model2$n.trees)
+plot(pred.boost.2, datos[-i,]$medv)
+abline(0,1,col="darkblue")
+Eout.boosting.2 = mean((pred.boost.2 - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.boosting.2, "\n")
+pause()
+gbm.perf(boosting.model2, oobag.curve = T, method="cv")
+pause()
+## ------------------------------------------------------------------------
+datos = data.frame(OJ)
+training = sample(x=nrow(datos), size=800)
+
+## ------------------------------------------------------------------------
+attach(datos)
+tr = tree(Purchase ~ ., data=datos[training,])
+print(tr)
+pause()
+## ------------------------------------------------------------------------
+s = summary(tr)
+print(s)
+pause()
+## ------------------------------------------------------------------------
+plot(tr)
+text(tr, pretty=0)
+pause()
+## ------------------------------------------------------------------------
+pred = predict(tr, datos[-training,], type="class")
+table(pred, Purchase[-training])
+cat("Precision: ", mean(pred != Purchase[-training]) ,"\n")
+cat("Etest = ", s$dev/s$df,"\n")
+pause()
+## ------------------------------------------------------------------------
+# K = 10 por defecto
+cvTree = cv.tree(tr, FUN = prune.misclass)
+data.frame(cvTree$size, cvTree$dev)
+
+## ------------------------------------------------------------------------
+plot(cvTree$size, cvTree$dev, type="b", col = "blue")
+
+pause()
