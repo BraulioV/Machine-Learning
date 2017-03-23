@@ -200,3 +200,50 @@ probKNN = ifelse(bestKNN == 0, 1 - probKNN, probKNN)
 rocplot(model = probKNN, test = datos.test$mpg01, Add_plot = T, colour = "blue")
 legend('bottomright', c("GLM","KNN"), col=c('red', 'blue'), lwd=3)
 pause()
+
+## ------------------------------------------------------------------------
+attach(Auto)
+lm.fit = glm(mpg01 ~ weight*I(horsepower*displacement*weight)^2, 
+  data = datos, family = "binomial")
+cv.error.5 = cv.glm(data = datos, glmfit=lm.fit, K=5)$delta[1]
+
+print(cv.error.5)
+pause()
+## ------------------------------------------------------------------------
+model.tune.knn = tune.knn(x=subset(vs_train, select=-mpg01), 
+    y=vs_train$mpg01, k=1:20, tunecontrol=tune.control(cross=5))
+print(model.tune.knn)
+pause()
+## ------------------------------------------------------------------------
+grid =10^seq(10, -2, length=length(Boston$crim))
+
+datos = model.matrix(Boston$crim ~., Boston)[,-1]
+y_datos = as.vector(Boston$crim)
+# indices para los datos de train
+i = sample(x=nrow(datos), size=floor(nrow(datos))*0.8)
+
+lasso.mod = glmnet(datos[i,], y_datos[i], alpha = 1, lambda = grid)
+plot(lasso.mod)
+legend('bottomleft', rownames(lasso.mod$beta), 
+  col=rainbow(n=length(rownames(lasso.mod$beta))), lwd=2, ncol = 3)
+pause()
+cv.out = cv.glmnet(datos, y_datos, alpha = 1)
+plot(cv.out)
+pause()
+mejorLambda = cv.out$lambda.min
+lasso.pred = predict(lasso.mod, s = mejorLambda, newx=datos[-i,])
+mean(lasso.pred - y_datos[-i])
+out = glmnet(datos, y_datos, lambda = grid, alpha = 1)
+lasso.coef = predict(out, type="coefficients", s = mejorLambda)
+subgrupo = abs(lasso.coef[,1])
+names(subgrupo[subgrupo >= 0.5])
+pause()
+## ------------------------------------------------------------------------
+attach(Boston)
+x = cbind(chas, nox, dis, rad)
+ridge.mod = glmnet(x[i,], y_datos[i], alpha=0, lambda = grid)
+ridge.pred = predict(ridge.mod, s = mejorLambda, newx=x[-i,])
+dif = ridge.pred - y_datos[-i]
+plot(dif)
+mean(dif)
+pause()
