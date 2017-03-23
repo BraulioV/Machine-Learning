@@ -146,3 +146,34 @@ glm.model6 = glm(mpg01 ~ weight*I(horsepower*displacement*weight)^2,
   data = datos, subset = i, family = "binomial")
 glmModelErrorTest(glm.model6, i, datos, datos.test)
 pause()
+
+## ------------------------------------------------------------------------
+set.seed(1)
+
+normalize <- function(data) {
+    apply(X=data, MARGIN=2, FUN=function(x) {
+        max <- max(x)
+        min <- min(x)
+        sapply(X=x, FUN=function(xi) (xi-min)/(max-min))
+    })
+}
+# normalizamos los datos
+
+caracteristicas = data.frame(horsepower, weight, displacement)
+names(caracteristicas) = c("horsepower", "weight", "displacement")
+
+vs_train = data.frame(data.frame(normalize(caracteristicas[i,])), as.factor(mpg01[i]))
+colnames(vs_train) = c("horsepower", "weight", "displacement", "mpg01")
+vs_test = data.frame(data.frame(normalize(caracteristicas[-i,])), datos.test$mpg01)
+colnames(vs_test) = c("horsepower", "weight", "displacement", "mpg01")
+pause()
+# esta función clasifica los datos con KNN
+learnKNN <- function(train, test, label, testLabel, k, pintarM = T, useProb=F){
+   knn.model=knn(train, test, label, k = k, prob = useProb)
+   if(pintarM) print(table(knn.model, testLabel))
+     knn.model
+   }
+knn1=learnKNN(train=subset(vs_train, select=-mpg01) , test=subset(vs_test, select=-mpg01),
+  vs_train$mpg01, vs_test$mpg01, k = 1)
+error1 = mean(knn1 != datos.test$mpg01)
+cat("Eout: ", error1, "\n")
