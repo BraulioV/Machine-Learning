@@ -247,3 +247,41 @@ dif = ridge.pred - y_datos[-i]
 plot(dif)
 mean(dif)
 pause()
+
+## ------------------------------------------------------------------------
+crimMean = mean(crim)
+newCrim = (crim >= crimMean)*1
+newCrim[newCrim == 0] = -1
+datos = data.frame(Boston,as.factor(newCrim))
+colnames(datos)[ncol(datos)]="newCrim"
+attach(datos)
+SVM <- function(kernel = "linear", control = 10){
+  # Realizamos la llamada al SVM
+  svmfit = tune(svm, newCrim ~., data=datos, kernel = kernel,
+      ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100,1000)),
+      tunecontrol=tune.control(cross=control))
+  svmfit.bestmodel = svmfit$best.model
+  ys = predict=predict(svmfit.bestmodel, data.frame(datos[-i,]))
+  print(table(predict=ys, truth=datos$newCrim[-i]))
+  cat("CV error: ", svmfit$best.performance ,"\n")
+  cat("Eout: ", mean(ys != datos[-i,]$newCrim) ,"\n")
+}
+
+SVM()
+pause()
+## ------------------------------------------------------------------------
+# KERNEL POLYNOMIAL
+SVM(kernel="polynomial")
+pause()
+## ------------------------------------------------------------------------
+#KERNEL DE BASE RADIAL
+SVM(kernel="radial")
+pause()
+## ------------------------------------------------------------------------
+#KERNEL BASADO EN SIGMOIDES
+SVM(kernel="sigmoid")
+pause()
+## ------------------------------------------------------------------------
+SVM(kernel="linear",control=5)
+pause()
+## ------------------------------------------------------------------------
