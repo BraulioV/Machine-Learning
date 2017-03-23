@@ -177,3 +177,26 @@ knn1=learnKNN(train=subset(vs_train, select=-mpg01) , test=subset(vs_test, selec
   vs_train$mpg01, vs_test$mpg01, k = 1)
 error1 = mean(knn1 != datos.test$mpg01)
 cat("Eout: ", error1, "\n")
+
+## ------------------------------------------------------------------------
+model.tune.knn = tune.knn(x=subset(vs_train, select=-mpg01), y=vs_train$mpg01, k=1:20)
+print(model.tune.knn)
+pause()
+
+## ------------------------------------------------------------------------
+rocplot <- function(model, test, Add_plot = F, colour = "red"){
+  y_pred = prediction(model, test)
+  perf = performance(y_pred, "tpr", "fpr")
+  
+  plot(perf, add = Add_plot, col = colour)
+}
+pred=glmModelErrorTest(glm.model6, i, datos, datos.test, getPredicts = T)[1]
+rocplot(model = pred, test = datos.test$mpg01)
+# Curva ROC para KNN
+bestKNN=learnKNN(train=subset(vs_train, select=-mpg01) , test=subset(vs_test, select=-mpg01),
+  vs_train$mpg01, vs_test$mpg01, k = model.tune.knn$best.model$k, useProb = T, pintarM = F)
+probKNN = attr(bestKNN, "prob")
+probKNN = ifelse(bestKNN == 0, 1 - probKNN, probKNN)
+rocplot(model = probKNN, test = datos.test$mpg01, Add_plot = T, colour = "blue")
+legend('bottomright', c("GLM","KNN"), col=c('red', 'blue'), lwd=3)
+pause()
