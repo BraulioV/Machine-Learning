@@ -114,3 +114,35 @@ glmModelErrorTest <- function(glm_model, trainingIndex, data, testData, getPredi
   else
     list(glm.prediction.model.test, glm.prediction.model.train)
 }
+
+glm.model1 = glm(formula = mpg01 ~ weight, 
+     data = datos, subset = i, family = "binomial")
+
+glmModelErrorTest(glm.model1, i, datos, datos.test)
+pause()
+## ------------------------------------------------------------------------
+glm.model2 = glm(mpg01 ~ horsepower, data = datos,
+   subset = i, family = "binomial")
+
+glmModelErrorTest(glm.model2, i, datos, datos.test)
+pause()
+## ------------------------------------------------------------------------
+glm.model3 = glm(mpg01 ~ displacement, data = datos,
+  subset = i, family = "binomial")
+glmModelErrorTest(glm.model3, i, datos, datos.test)
+pause()
+## ------------------------------------------------------------------------
+glm.model4 = glm(mpg01 ~ weight*horsepower*displacement, 
+  data = datos, subset = i, family = "binomial")
+glmModelErrorTest(glm.model4, i, datos, datos.test)
+pause()
+## ------------------------------------------------------------------------
+glm.model5 = glm(mpg01 ~ weight*I(horsepower+displacement)^2, 
+  data = datos, subset = i, family="binomial")
+glmModelErrorTest(glm.model5, i, datos, datos.test)
+pause()
+## ------------------------------------------------------------------------
+glm.model6 = glm(mpg01 ~ weight*I(horsepower*displacement*weight)^2, 
+  data = datos, subset = i, family = "binomial")
+glmModelErrorTest(glm.model6, i, datos, datos.test)
+pause()
