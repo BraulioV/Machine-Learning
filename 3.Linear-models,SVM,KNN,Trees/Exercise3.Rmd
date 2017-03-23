@@ -1,0 +1,233 @@
+---
+title: "Aprendizaje Automático"
+subtitle: "Práctica 3"
+author: "Braulio Vargas López"
+date: "12 de mayo de 2016"
+lang: es
+header-includes:
+  - \usepackage{enumerate}
+  - \usepackage{hyperref}
+output: 
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("ISLR")
+library("ggplot2")
+library("class")
+library("e1071")
+library("ROCR")
+library("gbm")
+library("boot")
+library("glmnet")
+library("MASS")
+library("randomForest")
+library("tree")
+```
+
+# Ejercicio 1
+\sffamily\bfseries
+Usar el conjunto de datos Auto que es parte del paquete ISLR.
+
+En este ejercicio desarrollaremos un modelo para predecir si un coche tiene un consumo de carburante alto o bajo usando la base de datos Auto. Se considerará alto cuando sea superior a la mediana de la variable mpg y bajo en caso contrario.
+
+\begin{enumerate}[a)]
+  \item Usar las funciones de R \texttt{pairs()} y \texttt{boxplot()} para investigar la dependencia entre \textit{mpg} y las otras características. ¿Cuáles de las otras características parece más útil para predecir \textit{mpg}? Justificar la respuesta. 
+  \item Seleccionar las variables predictoras que considere más relevantes.
+  \item Particionar el conjunto de datos en un conjunto de entrenamiento (80\%) y otro de test (20\%). Justificar el procedimiento usado.
+  \item Crear una variable binaria, $mpg01$, que será igual 1 si la variable $mpg$ contiene un valor por encima de la mediana, y -1 si $mpg$ contiene un valor por debajo de la mediana. La mediana se puede calcular usando la función \texttt{median()}. (Nota: puede resultar útil usar la función \texttt{data.frame()} para unir en un mismo conjunto de datos la nueva variable $mpg01$ y las otras variables de Auto).
+  \begin{enumerate}[$\bullet$]
+    \item  Ajustar un modelo de Regresión Logística a los datos de entrenamiento y predecir $mpg01$ usando las variables seleccionadas en b). ¿Cuál es el error de test del modelo? Justificar la respuesta.
+    \item  Ajustar un modelo K-NN a los datos de entrenamiento y predecir $mpg01$ usando solamente las variables seleccionadas en b). ¿Cuál es el error de test en el modelo? ¿Cuál es el valor de K que mejor ajusta los datos? Justificar la respuesta. (Usar el paquete class de R).
+    \item Pintar las curvas ROC (instalar paquete ROCR en R) y comparar y valorar los resultados obtenidos para ambos modelos.
+  \end{enumerate}
+  \item Estimar el error de test de ambos modelos (RL, K-NN) pero usando Validación Cruzada de 5-particiones. Comparar con los resultados obtenidos en el punto anterior.
+  \item Ajustar el mejor modelo de regresión posible considerando la variable mpg como salida y el resto como predictoras. Justificar el modelo ajustado en base al patrón de los residuos. Estimar su error de entrenamiento y test.
+\end{enumerate}
+\normalfont
+
+## Solución
+
+a) En este apartado, podemos mostrar las gráficas resultantes de cruzar todos con todos, y ver en cuales de ellas parece haber alguna relación. Para ello, usamos lo siguiente:
+
+```{r}
+attach(Auto)
+pairs(~ ., data=Auto)
+```
+
+En estas gráficas, vemos que existe una relación entre $mpg$ y $displacement$, $mpg$ y $horsepower$ y entre $mpg$ y $weight$, ya que se ve una relación clara entre estas variables, mientras que en otras, podemos ver que los datos varían demasiado o tienen mucho ruido como para poder aprender algo.
+
+Si usamos \texttt{boxplot} para representar las variables obtenemos las siguientes gráficas:
+
+```{r}
+boxplot(mpg ~ displacement, data=Auto, xlab="Mpg", ylab = "Displacement")
+boxplot(mpg ~ horsepower, data=Auto, xlab="Mpg", ylab = "Horsepower")
+boxplot(mpg ~ weight, data=Auto, xlab="Mpg", ylab = "Weight")
+boxplot(mpg ~ acceleration, data=Auto, xlab="Mpg", ylab = "Acceleration")
+```
+
+
+En las distintas gráficas, podemos ver la relación que hay entre los dos elementos que estamos comparando. En esta relación podemos ver representados cómo la ``caja'' representa el intervalo entre el cuartil 1 y el 3, y el rango de valores total. Además, los $outliers$ quedan representados como un solo punto. En las distintas gráficas, podemos ver como todas tienen una varianza pequeña, o el ruido en la función es menor, excepto si vemos el resultado de \texttt{boxplot}entre $mpg$ y $acceleration$, que vemos como se ve incrementado la varianza y el ruido en los datos.
+
+b) Una vez visto lo anterior, las variables más relevantes para poder predecir $mpg$ vemos que son \textit{displacement}, \textit{horsepower} y \textit{weight}. Pero, para escoger mejor los datos, podemos hacer un ajuste lineal rápido con la función \texttt{lm} y ver qué variable de estas tres es más importante con la función \texttt{summary}.
+
+c) Para dividir el conjunto de datos en entrenamiento y test, podemos hacer lo siguiente:
+
+```{r}
+i = sample(x=nrow(Auto), size=floor(nrow(Auto))*0.8)
+data.train = Auto[i,]
+data.test = Auto[-i,]
+```
+
+Para dividir los datos, cogemos una muestra aleatoria de índices de longitud igual $0,8 \cdot n_{muestras}$, entre 1 y el número total de muestras que tenemos. Esta muestra de índices, la usaremos para aprender el modelo con el 80\% de los datos, y usar el 20\% para test.
+
+Una vez divididos, vamosa realizar una serie de modelos lineales, para estudiar cuál de ellos es mejor:
+
+1) En este caso, realizamos un modelo lineal simple que tiene en cuenta solo $mpg$ en función de $weight$
+```{r}
+i = sample(x=nrow(Auto), size=floor(nrow(Auto))*0.8)
+m01= lm(mpg~weight,data = Auto, subset= i)
+summary(m01)
+(ggplot() + geom_point(data=as.data.frame(data.test), 
+            aes(x=data.test$weight, y=data.test$mpg)) 
+          + geom_line(aes(x=data.test$weight,
+                          y=predict(m01,data.test), color="red")))
+
+```
+En el summary, podemos ver cómo el error dentro de la muestra, es del 0.6\%, que para ser un modelo lineal simple, no está nada mal. Pero, al estimar los valores con el conjunto de test, vemos que tampoco lo hace mal, pero se puede mejorar y para ello, tendremos los siguientes modelos.
+
+2) En este caso, ya no solo tenemos en cuenta $weight$, si no que ya tenemos en cuenta también $displacement$ y $horsepower$. En este caso, obtenemos que el error es de casi el 0.7\%, un poco mayor que en el modelo anterior, pero, fuera de la muestra, lo hace bastante mejor que $m01$.
+```{r}
+m02 = lm(mpg ~ weight+displacement+horsepower, data=Auto, subset = i)
+summary(m02)
+(ggplot() + geom_point(data=as.data.frame(data.test), 
+            aes(x=data.test$horsepower*data.test$displacement*data.test$weight,
+                y=data.test$mpg)) 
+          + geom_line(aes(x=data.test$horsepower*data.test$displacement*data.test$weight, 
+                          y=predict(m02,data.test), color="red")))
+```
+3) En este modelo, comenzamos a usar modelos con funciones cuadráticas, para calcular el valor del punto, usando $weight$ y el cuadrado de $weight$ y $horsepower$. En este modelo, \texttt{summary} nos indica que las características que usamos para calcular el valor del punto están muy relacionadas y son importantes para el cálculo. Además, aunque el error que obtenemosd dentro de la muestra es mayor que el de los anteriores, 0.7, vemos que el comportamiento fuera de la muestra es mucho mejor que el de los anteriores.
+```{r}
+m03 = lm(mpg~weight*I(horsepower+displacement)^2,data = Auto, subset= i)
+summary(m03)
+(ggplot() + geom_point(data=as.data.frame(data.test), 
+            aes(x=data.test$weight*I((data.test$horsepower+data.test$displacement)^2), 
+                y=data.test$mpg)) 
+          + geom_line(aes(x=data.test$weight*I((data.test$horsepower+
+                data.test$displacement)^2), 
+                y=predict(m03,data.test), color="red")))
+```
+4) En este último modelo, realizamos un modelo también no lineal de orden 2, relacionando las tres características entre sí y a su vez, con $weight$. Como primera mejora obtenemos que el error dentro de la muestra respecto al modelo anterior se ha reducido. La segunda mejora es que fuera de la muestra, lo hace incluso mejor, como se ve en la gráfica de la función y el ajuste del modelo.
+```{r}
+m04 = lm(mpg~weight*I(horsepower*displacement*weight)^2,data = Auto, subset= i)
+summary(m04)
+(ggplot() + geom_point(data=as.data.frame(data.test), 
+            aes(x=data.test$weight*I(data.test$horsepower*
+              data.test$displacement*data.test$weight)^2, 
+              y=data.test$mpg)) 
+          + geom_line(aes(x=data.test$weight*I(data.test$horsepower*
+              data.test$displacement*data.test$weight)^2, 
+              y=predict(m04,data.test), color="red")))
+```
+\label{m04}
+d) Para crear la variable $mpg01$, podemos hacer uso de la función $sapply$, para asignar un uno o un cero en función de si el valor del dato $mpg_i$ está por encima o por debajo de la mediana de $mpg$.
+
+```{r}
+# Calculamos la media de mpg
+medianMPG = median(mpg)
+# Y etiquetamos los datos con valores 0/1 en función de si son
+# mayores o menores que la mediana de mpg
+mpg01 = (mpg >= medianMPG)*1
+# Y creamos un dataframe con estos datos, eliminando
+# los nombres del dataframe. También generamos un
+# dataframe con los datos de test
+datos = data.frame(Auto,as.factor(mpg01))
+colnames(datos)[ncol(datos)]="mpg01"
+datos$name = NULL
+datos.test = data.frame(datos[-i,])
+```
+
+* Para ajustar la regresión logística, hacemos uso de $glm$, con $mpg$ en función de las variables $weight$, $displacement$ y $horsepower$. Crearemos varios modelos en función con regresión logística, teniendo en cuenta varios parámetros. 
+
+En este primer modelo, realizamos la regresión logística de $mpg$ en función de $weight$. Una vez aprendido el modelo, calculamos las etiquetas con el modelo aprendido y generamos la matriz de confusión. Tras esto, calculamos el error dentro de la muestra ($E_{in}$) y fuera de la muestra ($E_{out}$) con los datos 
+de test.
+```{r}
+# Calculamos la regresión logística
+attach(datos)
+glmModelErrorTest <- function(glm_model, trainingIndex, data, testData, getPredicts = F) {
+  # Hacemos la predicción con los datos de test
+  glm.prediction.model.train = predict(glm_model, type="response")
+  glm.prediction.model.test = predict(object=glm_model, data.frame(testData), type="response")
+  # Y calculamos las etiquetas con predict
+  glm.prediction.model.train.y = glm.prediction.model.train
+  glm.prediction.model.train.y[glm.prediction.model.train.y <= 0.5] = 0
+  glm.prediction.model.train.y[glm.prediction.model.train.y > 0.5] = 1
+  glm.prediction.model.test.y = glm.prediction.model.test
+  glm.prediction.model.test.y[glm.prediction.model.test.y <= 0.5] = 0
+  glm.prediction.model.test.y[glm.prediction.model.test.y > 0.5] = 1
+  # Generamos la matriz de confusión con los datos de test
+  print(table(glm.prediction.model.train.y, data$mpg01[trainingIndex]))
+  print(table(glm.prediction.model.test.y, testData$mpg01))
+  if(!getPredicts){
+    cat("Ein: ", mean(glm.prediction.model.train.y != mpg01[trainingIndex]) ,"\n")
+    cat("Eout: ", mean(glm.prediction.model.test.y != testData$mpg01) ,"\n")
+  }
+  else
+    list(glm.prediction.model.test, glm.prediction.model.train)
+}
+
+glm.model1 = glm(formula = mpg01 ~ weight, 
+     data = datos, subset = i, family = "binomial")
+
+glmModelErrorTest(glm.model1, i, datos, datos.test)
+```
+
+En este segundo modelo, realizamos lo mismo, pero con $mpg$ en función de $horsepower$.
+
+```{r}
+glm.model2 = glm(mpg01 ~ horsepower, data = datos,
+   subset = i, family = "binomial")
+
+glmModelErrorTest(glm.model2, i, datos, datos.test)
+```
+
+Como tercer modelo, tenemos la regresión logística de $mpg$ en función de $displacement$.
+
+```{r}
+glm.model3 = glm(mpg01 ~ displacement, data = datos,
+  subset = i, family = "binomial")
+glmModelErrorTest(glm.model3, i, datos, datos.test)
+```
+
+En este modelo, realizamos algo más complejo, donde calculamos la regresión logística de $mpg$ en función de $horsepower$, $displacement$ y $weight$, estando relacionados los tres. Tras esto, al igual que en los anteriores, obtenemos las matrices de confusión, y calculamos el error dentro y fuera de la muestra.
+
+```{r}
+glm.model4 = glm(mpg01 ~ weight*horsepower*displacement, 
+  data = datos, subset = i, family = "binomial")
+glmModelErrorTest(glm.model4, i, datos, datos.test)
+```
+
+En estos dos últimos modelos, realizamos una regresión logística con un modelo cuadrático, ajustando los datos. Una vez aprendido, predecimos con los datos de test, y calculamos el error dentor y fuera de la muestra. Estos dos modelos son los que calculamos  en el apartado anterior:
+
+```{r}
+glm.model5 = glm(mpg01 ~ weight*I(horsepower+displacement)^2, 
+  data = datos, subset = i, family="binomial")
+glmModelErrorTest(glm.model5, i, datos, datos.test)
+```
+
+En este caso, vemos que el modelo aprendido resulta ser un poco mejor que el modelo anterior, ya que, aunque el error dentro de la muestra sea peor en este modelo, vemos que el error fuera de la muestra mejora al modelo anterior. Y por último, vamos a probar con el último modelo que realizamos en el apartado anterior.
+
+```{r}
+glm.model6 = glm(mpg01 ~ weight*I(horsepower*displacement*weight)^2, 
+  data = datos, subset = i, family = "binomial")
+glmModelErrorTest(glm.model6, i, datos, datos.test)
+```
+
+Como vemos, el error dentro de la muestra en este caso viene a ser un poco peor que el modelo anterior, pero fuera de la muestra, se comportan más o menos igual, diferenciandose en el número de falsos positivos y falsos negativos, pero obteniendo el mismo error.
+
+Por lo tanto, los mejores modelos son $glm.model5$ y $glm.model6$ ya que obtienen los errores más pequeños fuera de la muestra. Y, al elegir entre estos dos, cogeremos $glm.model5$, ya que al ser el modelo más simple tiene preferencia si usamos el criterio de la *navaja de Ockham*.
