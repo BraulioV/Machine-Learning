@@ -285,3 +285,45 @@ pause()
 SVM(kernel="linear",control=5)
 pause()
 ## ------------------------------------------------------------------------
+
+set.seed(1)
+datos = Boston
+attach(datos)
+# Indices de los datos de training
+i = sample(x=nrow(datos), size=floor(nrow(datos))*0.8) 
+#----------------------------------------------------------------
+# - subset => indices del conjunto de entrenamiento
+# - mtry => número de variables predictoras para cada nodo
+# - importance => parámetro que indica si la función debe tener 
+#   en cuenta la importancia que tienen los distintos parámetros
+#   para ajustar el modelo.
+bagging = randomForest(medv ~ ., data=datos, subset = i, mtry=length(datos)-1, importance=T)
+plot(bagging)
+pause()
+print(bagging)
+pause()
+## ------------------------------------------------------------------------
+pred = predict(bagging, newdata=datos[-i,])
+plot(pred, datos[-i,]$medv)
+abline(0,1,col="red")
+pause()
+Eout = mean((pred - datos[-i,]$medv)^2)
+cat("Eout = ", Eout, "\n")
+pause()
+## ------------------------------------------------------------------------
+# Con el parámetro "doBest" devolvemos directamente el mejor modelo
+rf=tuneRF(x=subset(datos, select=-medv), y=datos$medv, doBest=T)
+#En la gráfica podemos ver como el mejor modelo es con mtry = 4
+# Y podemos haceder al randomForest de la siguiente manera
+rf.best = rf$forest
+pause()
+plot(rf)
+pause()
+print(rf)
+pause()
+pred.rf = predict(rf, newdata=datos[-i,])
+plot(pred.rf, datos[-i,]$medv)
+abline(0,1,col="blue")
+Eout.rf = mean((pred.rf - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.rf, "\n")
+pause()
