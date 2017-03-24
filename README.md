@@ -1,6 +1,6 @@
 # Machine Learning
 
-### Machine Learning exercises for my subject of Machine Learning at University of Granada (UGR) of 2015/2016.
+### Machine Learning exercises for my subject of Machine Learning (Aprendizaje Automático) at University of Granada (UGR) of 2015/2016.
 
 This repository contents Machine Learning exercises divided by sections, corresponding to the exercises of the subject. Each folder contents the R code and a R-markdown that you can use on [RStudio](https://github.com/rstudio/rstudio) and see the results of the exercises, edit the content, etc. Also, a PDF is included (in Spanish) with the results and conclusions of the differents exercises.
 
