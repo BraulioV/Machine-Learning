@@ -320,3 +320,116 @@ print(model.tune.knn)
 ```
 
 * En este caso, el mejor modelo obtenido es el modelo $KNN$ donde hemos podido comprobar a lo largo del ejercicio, como ajusta mejor los datos y obtiene mejores resultados que el resto. Además, podemos comprobarlo facilmente en la curva ROC.
+
+# Ejercicio 2
+\sffamily\bfseries
+Usar la base de datos Boston (en el paquete MASS de R) para ajustar un modelo que prediga si dado un suburbio este tiene una tasa de criminalidad (crim) por encima o por debajo de la mediana. Para ello considere la variable crim como la variable salida y el resto como variables predictoras. 
+
+a) Encontrar el subconjunto óptimo de variables predictoras a partir de un modelo de regresión-LASSO (usar paquete glmnet de R) donde seleccionamos solo aquellas variables con coeficiente mayor de un umbral prefijado. 
+b) Ajustar un modelo de regresión regularizada con “weight-decay” (ridge-regression) y las variables seleccionadas. Estimar el error residual del modelo y discutir si el comportamiento de los residuos muestran algún indicio de “underfitting”.
+c) Definir una nueva variable con valores -1 y 1 usando el valor de la mediana de la variable crim como umbral. Ajustar un modelo SVM que prediga la nueva variable definida. (Usar el paquete e1071 de R). Describir con detalle cada uno de los pasos dados en el aprendizaje del modelo SVM. Comience ajustando un modelo lineal y argumente si considera necesario usar algún núcleo. Valorar los resultados del uso de distintos núcleos. 
+
+Bonus-3: Estimar el error de entrenamiento y test por validación cruzada de 5 particiones.
+
+\normalfont
+
+a) Para realizar la selección del subconjunto ótpimo, haremos uso de la función \texttt{glmnet}, con el parámetro \texttt{alpha = 1}.
+
+```{r}
+grid =10^seq(10, -2, length=length(Boston$crim))
+
+datos = model.matrix(Boston$crim ~., Boston)[,-1]
+y_datos = as.vector(Boston$crim)
+# indices para los datos de train
+i = sample(x=nrow(datos), size=floor(nrow(datos))*0.8)
+
+lasso.mod = glmnet(datos[i,], y_datos[i], alpha = 1, lambda = grid)
+plot(lasso.mod)
+legend('bottomleft', rownames(lasso.mod$beta), 
+  col=rainbow(n=length(rownames(lasso.mod$beta))), lwd=2, ncol = 3)
+cv.out = cv.glmnet(datos, y_datos, alpha = 1)
+plot(cv.out)
+mejorLambda = cv.out$lambda.min
+lasso.pred = predict(lasso.mod, s = mejorLambda, newx=datos[-i,])
+mean(lasso.pred - y_datos[-i])
+out = glmnet(datos, y_datos, lambda = grid, alpha = 1)
+lasso.coef = predict(out, type="coefficients", s = mejorLambda)
+subgrupo = abs(lasso.coef[,1])
+names(subgrupo[subgrupo >= 0.5])
+```
+
+Como vemos, el número de variables ha bastante reducido, quedando solo las más relevantes, dentro del umbral establecido, tras haber realizado un cálculo inicial, con los datos regularizados, para unos datos de training.
+
+A continuación, obtenemos un $\lambda$ realizando validación cruzada para predecir los datos y vemos la media de errores cuadráticos en los datos de test. Por último, tras haber escogido el mejor $\lambda$ volvemos a llamar al método \texttt{glmnet} y realizamos la predicción con el mejor $\lambda$ para obtener los coeficientes para cada variable, con la opción \texttt{type = "coefficients"}, y nos quedamos con los que superen el umbral.
+
+b) Para hacer la \textit{ridge-regression}, haremos uso de los datos de antes, ya preparados, gracias a la función \texttt{model.matrix}. 
+
+```{r}
+attach(Boston)
+x = cbind(chas, nox, dis, rad)
+ridge.mod = glmnet(x[i,], y_datos[i], alpha=0, lambda = grid)
+ridge.pred = predict(ridge.mod, s = mejorLambda, newx=x[-i,])
+dif = ridge.pred - y_datos[-i]
+plot(dif)
+mean(dif)
+```
+
+Como podemos ver en la gráfica, el modelo es capaz de ajustar bastate bien alrededor del 60\% de los datos de test, mientras que en el resto, vemos como hay indicios de \textit{underfitting} ya que se empiezan a producir errores en los datos, teniendo algunos errores considerables entre el modelo ajustado y el real, pero puede ser que el dato que ofrece el mayor error con diferencia a los demás, puede ser que sea un \textit{outlayer}.
+
+c) Para hacer la nueva variable, procederemos de forma similiar a como se hacía en el ejercicio 1 para calcular $mpg01$. 
+```{r}
+crimMean = mean(crim)
+newCrim = (crim >= crimMean)*1
+newCrim[newCrim == 0] = -1
+datos = data.frame(Boston,as.factor(newCrim))
+colnames(datos)[ncol(datos)]="newCrim"
+attach(datos)
+SVM <- function(kernel = "linear", control = 10){
+  # Realizamos la llamada al SVM
+  svmfit = tune(svm, newCrim ~., data=datos, kernel = kernel,
+      ranges = list(cost=c(0.001,0.01,0.1,1,5,10,100,1000)),
+      tunecontrol=tune.control(cross=control))
+  svmfit.bestmodel = svmfit$best.model
+  ys = predict=predict(svmfit.bestmodel, data.frame(datos[-i,]))
+  print(table(predict=ys, truth=datos$newCrim[-i]))
+  cat("CV error: ", svmfit$best.performance ,"\n")
+  cat("Eout: ", mean(ys != datos[-i,]$newCrim) ,"\n")
+}
+
+SVM()
+```
+
+Como vemos, el ajuste que produce SVM es de una calidad muy superior a los modelos, ya que el modelo ajusta los datos según el kernel elegido, y prueba con la función \texttt{tune} los distintos rangos que aparecen en la lista del parámetro \texttt{ranges}. Para estimar el error del modelo, utiliza validación cruzada, y se queda con el modelo que obtiene mejor error, (almacenado en la variable \textit{best.perfomance}).
+
+Tras realizar las pruebas con los distintos parámetros, escogemos el mejor modelo de todos los modelos posibles, con \textit{svmfit.bestmodel = svmfit\$best.model}. A continuación, mostramos la matriza de confusión y como podemos ver, los datos de la matriz nos indica que el error utilizando \textit{SVM} es muy pequeño, y al mostrar el error de validación cruzada en la muestra y el error fuera de la muestra, vemos que ajusta muy bien los datos.
+
+En un principio, vemos que con el modelo lineal generaliza muy bien los datos y no solo eso, sino que los ajusta muy bien también para ser un kernel tan ``simple''. Pero podemos ver si cambiando de kernel, ajustamos mejor los datos.
+
+```{r}
+# KERNEL POLYNOMIAL
+SVM(kernel="polynomial")
+```
+
+Como podemos ver, en un principio, para este set de datos, cambiar entre un kernel lineal y polinómico, no supone un cambio sustancial, por lo que podemos seguir eligiendo el kernel lineal.
+
+```{r}
+#KERNEL DE BASE RADIAL
+SVM(kernel="radial")
+```
+
+```{r}
+#KERNEL BASADO EN SIGMOIDES
+SVM(kernel="sigmoid")
+```
+
+Como podemos ver, cambiar de kernel para este set de datos, con validación cruzada de 10 particiones, no suponen mejoría ante un kernel lineal, utilizando los parámetros por defecto, a excepción del kernel con base radial, que es capaz de ajustar un buen modelo también.
+
+d) Para estimar el error de test y el error de validación cruzada con 5 particiones, podemos usar la misma función que en el apartado anterior, pero, cambiando el parámetro \texttt{tunecontrol}, haciendo que tome el valor 5, ya que por defecto realiza una partición de $K = 10$.
+
+Para ello, en la función \textit{SVM} implementada, cambiaremos el valor del parámetro \texttt{control} a 5 para que se realice una validación cruzada con $k=5$.
+
+```{r}
+SVM(kernel="linear",control=5)
+```
+
+Como vemos, el error que se produce es mayor que si hacemos una validación cruzada con un $k$ más pequeño ya que el modelo entrena con menos datos y realiza las pruebas de test con conjuntos de datos más grandes, con lo que la probabilidad de error se hace mayor.
