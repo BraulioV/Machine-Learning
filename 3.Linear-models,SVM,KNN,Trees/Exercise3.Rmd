@@ -277,3 +277,25 @@ print(model.tune.knn)
 ```
  
 En el resultado de la función, podemos ver cómo la función después de ajustar el modelo con los distintos $k$ que puede haber en el intervalo que hemos establecido, escoge el $k$ que ajusta mejor al modelo.
+
+* Para pintar las curvas ROC, haremos uso del paquete $ROCR$ de la siguiente manera, como se puede ver en el libro ``\textit{An Introduction to Statistical Learning}'':
+
+```{r}
+rocplot <- function(model, test, Add_plot = F, colour = "red"){
+  y_pred = prediction(model, test)
+  perf = performance(y_pred, "tpr", "fpr")
+  
+  plot(perf, add = Add_plot, col = colour)
+}
+pred=glmModelErrorTest(glm.model6, i, datos, datos.test, getPredicts = T)[1]
+rocplot(model = pred, test = datos.test$mpg01)
+# Curva ROC para KNN
+bestKNN=learnKNN(train=subset(vs_train, select=-mpg01) , test=subset(vs_test, select=-mpg01),
+  vs_train$mpg01, vs_test$mpg01, k = model.tune.knn$best.model$k, useProb = T, pintarM = F)
+probKNN = attr(bestKNN, "prob")
+probKNN = ifelse(bestKNN == 0, 1 - probKNN, probKNN)
+rocplot(model = probKNN, test = datos.test$mpg01, Add_plot = T, colour = "blue")
+legend('bottomright', c("GLM","KNN"), col=c('red', 'blue'), lwd=3)
+```
+
+Como podemos ver en el resultado de la ejecución, la curva ROC de $KNN$ es un poco mejor que la de $GLM$, con lo que obtenemos que el modelo KNN es un poco mejor que regresión para este conjunto de datos, ya que ajusta mejor los datos y clasifica mejor que $GLM$.
