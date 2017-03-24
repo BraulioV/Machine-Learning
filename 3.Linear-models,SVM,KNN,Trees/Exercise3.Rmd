@@ -231,3 +231,49 @@ glmModelErrorTest(glm.model6, i, datos, datos.test)
 Como vemos, el error dentro de la muestra en este caso viene a ser un poco peor que el modelo anterior, pero fuera de la muestra, se comportan más o menos igual, diferenciandose en el número de falsos positivos y falsos negativos, pero obteniendo el mismo error.
 
 Por lo tanto, los mejores modelos son $glm.model5$ y $glm.model6$ ya que obtienen los errores más pequeños fuera de la muestra. Y, al elegir entre estos dos, cogeremos $glm.model5$, ya que al ser el modelo más simple tiene preferencia si usamos el criterio de la *navaja de Ockham*.
+
+
+* Ahora vamos a proceder a utlizar el $KNN$ para ajustar el modelo. La función \texttt{knn} de la biblioteca $class$, realiza directamente la predicción de los datos, a diferencia de los modelos lineales anteriores. Para ello, la función toma como valores de entrada el conjunto de training, de test, las etiquetas del conjunto de training y el $k$, que inicialmente será $k=1$.
+
+Además de esto, para que el $KNN$ funcione correctamente, tenemos que normalizar los datos, para que las dimensiones de uno no condicionen el resultado, al ser distintas.
+
+```{r}
+set.seed(1)
+
+normalize <- function(data) {
+    apply(X=data, MARGIN=2, FUN=function(x) {
+        max <- max(x)
+        min <- min(x)
+        sapply(X=x, FUN=function(xi) (xi-min)/(max-min))
+    })
+}
+# normalizamos los datos
+
+caracteristicas = data.frame(horsepower, weight, displacement)
+names(caracteristicas) = c("horsepower", "weight", "displacement")
+
+vs_train = data.frame(data.frame(normalize(caracteristicas[i,])), as.factor(mpg01[i]))
+colnames(vs_train) = c("horsepower", "weight", "displacement", "mpg01")
+vs_test = data.frame(data.frame(normalize(caracteristicas[-i,])), datos.test$mpg01)
+colnames(vs_test) = c("horsepower", "weight", "displacement", "mpg01")
+
+# esta función clasifica los datos con KNN
+learnKNN <- function(train, test, label, testLabel, k, pintarM = T, useProb=F){
+   knn.model=knn(train, test, label, k = k, prob = useProb)
+   if(pintarM) print(table(knn.model, testLabel))
+     knn.model
+   }
+knn1=learnKNN(train=subset(vs_train, select=-mpg01) , test=subset(vs_test, select=-mpg01),
+  vs_train$mpg01, vs_test$mpg01, k = 1)
+error1 = mean(knn1 != datos.test$mpg01)
+cat("Eout: ", error1, "\n")
+```
+
+Como vemos, aproximadamente el 90\% de las muestras están bien etiquetadas. Para ver si se mejora o no, vamos a cambiar el tamaño de $k$. Esto lo haremos con la función \texttt{tune.knn}, la cual, nos devolverá el modelo con el mejor $k$ y el mejor $k$.
+
+```{r}
+model.tune.knn = tune.knn(x=subset(vs_train, select=-mpg01), y=vs_train$mpg01, k=1:20)
+print(model.tune.knn)
+```
+ 
+En el resultado de la función, podemos ver cómo la función después de ajustar el modelo con los distintos $k$ que puede haber en el intervalo que hemos establecido, escoge el $k$ que ajusta mejor al modelo.
