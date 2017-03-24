@@ -433,3 +433,112 @@ SVM(kernel="linear",control=5)
 ```
 
 Como vemos, el error que se produce es mayor que si hacemos una validación cruzada con un $k$ más pequeño ya que el modelo entrena con menos datos y realiza las pruebas de test con conjuntos de datos más grandes, con lo que la probabilidad de error se hace mayor.
+
+# Ejercicio 3
+
+\sffamily\bfseries
+
+Usar el conjunto de datos Boston y las librerías randomForest y gbm de R.
+
+1. Dividir la base de datos en dos conjuntos de entrenamiento (80%) y test (20%).
+2. Usando la variable medv como salida y el resto como predictoras, ajustar un modelo de regresión usando bagging. Explicar cada uno de los parámetros usados. Calcular el error del test.
+3. Ajustar un modelo de regresión usando “Random Forest”. Obtener una estimación del número de árboles necesario. Justificar el resto de parámetros usados en el ajuste. Calcular el error de test y compararlo con el obtenido con bagging.
+4. Ajustar un modelo de regresión usando Boosting (usar gbm con distribution = ’gaussian’). Calcular el error de test y compararlo con el obtenido con bagging y Random Forest.
+
+\normalfont
+
+a) Para realizar la partición en datos de training y test, seguiremos el mismo método que antes, obteniendo un vector de índcies aleatorio.
+b) Para ajustar el modelo de regresión usando bagging hacemos lo siguiente:
+```{r}
+set.seed(1)
+datos = Boston
+attach(datos)
+# Indices de los datos de training
+i = sample(x=nrow(datos), size=floor(nrow(datos))*0.8) 
+#----------------------------------------------------------------
+# - subset => indices del conjunto de entrenamiento
+# - mtry => número de variables predictoras para cada nodo
+# - importance => parámetro que indica si la función debe tener 
+#   en cuenta la importancia que tienen los distintos parámetros
+#   para ajustar el modelo.
+bagging = randomForest(medv ~ ., data=datos, subset = i, mtry=length(datos)-1, importance=T)
+plot(bagging)
+print(bagging)
+```
+
+En la gráfica anterior vemos cómo conforme se van aumentando el número de árboles va disminuyendo el error, hasta que más o menos se mantiene constante alrededor de un error con valor 12, aproximadamente. Para predecir el error de test, usaremos los índices anteriores y el modelo aprendido, como se ve a continuación:
+
+```{r}
+pred = predict(bagging, newdata=datos[-i,])
+plot(pred, datos[-i,]$medv)
+abline(0,1,col="red")
+Eout = mean((pred - datos[-i,]$medv)^2)
+cat("Eout = ", Eout, "\n")
+```
+
+En la gráfica podemos ver cómo los datos difieren entre la predicción y los datos reales, viendo el error que se produce. Si el error fuera 0, todos los datos se situarían sobre la línea de la gráfica.
+
+c) Para ajustar un modelo randomForest, usaremos la función $tuneRF$ que al igual que hacíamos en apartados anteriores, para obtener el mejor valor de $mtry$ posible para el conjunto de datos dado. $tuneRF$ busca el modelo óptimo haciendo uso del error \textit{Out-of-Bag}.
+
+Este valor $mtry$ es el número de variables que se escogen aleatoriamente para particionar los datos en cada árbol. Por defecto en problemas de regresión usa $\frac{p}{3}$ donde $p$ es el número de variables predictoras de las que disponemos.
+```{r}
+# Con el parámetro "doBest" devolvemos directamente el mejor modelo
+rf=tuneRF(x=subset(datos, select=-medv), y=datos$medv, doBest=T)
+#En la gráfica podemos ver como el mejor modelo es con mtry = 4
+# Y podemos haceder al randomForest de la siguiente manera
+rf.best = rf$forest
+plot(rf)
+print(rf)
+pred.rf = predict(rf, newdata=datos[-i,])
+plot(pred.rf, datos[-i,]$medv)
+abline(0,1,col="blue")
+Eout.rf = mean((pred.rf - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.rf, "\n")
+```
+
+En la gráfica y en el error que obtenemos fuera de la muestra, vemos como el modelo de randomForest es altamente superior al modelo de bagging, ya que mientras que en el modelo anterior teníamos un $E_{out} \approx 8,3$, en este modelo nos quedamos muy por debajo, viendo cómo se ajustan mejor los datos.
+
+Respecto al número de árboles que usa el modelo, en las gráficas anteriores podemos ver como a medida que va creciendo el número de árboles, baja también el error de training, pero llega un momento en el que por más que aumentemos el número de árboles de los que dispone el entrenamiento, no conseguimos hacer mejoras significativas. Además, si no hacemos más que incrementar el número de árboles, empezaremos a ajustar también el ruido que puedan tener los datos, por lo que empezaríamos a tener problemas de sobreajuste en el modelo. 
+
+d) Para realizar un modelo haciendo uso de la técnica de boosting, haremos uso del paquete $gbm$ y de la función $gbm$, que estimará $medv$ con todas las variables predictoras, se quedará con aquellas que más importancia tengan. Habrá que establecer el parámetro $distribution$ a $gaussian$ ya que es un problema de regresión
+```{r}
+boosting = gbm(medv ~., data=datos[i,], distribution = "gaussian",cv.folds = 10)
+summary(boosting)
+```
+
+En la gráfica podemos ver cómo $lstat$ y $rm$ son las variables más importantes para predecir el modelo y justo debajo de ella, el valor de importancia de cada una de las variables. Ahora, vamos a ver cómo se comporta el modelo fuera de la muestra.
+
+```{r}
+pred.boost = predict(boosting , newdata = datos[-i,] , n.trees =boosting$n.trees)
+plot(pred.boost, datos[-i,]$medv)
+abline(0,1,col="green")
+Eout.boosting = mean((pred.boost - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.boosting, "\n")
+```
+
+Como vemos, el error fuera de la muestra es terrible en comparación con los otros modelos, y casi con cualquiera. Esto se debe a que el modelo en sí, utiliza una cantidad muy pequeña de árboles para aprender el modelo, con lo que no es capaz de generar un buen modelo.
+
+Para solucionar esto, haremos uso de $gbm.perf$ que estima el número óptimo de iteraciones que necesita un modelo de boosting.
+
+```{r}
+gbm.perf(boosting, oobag.curve = T, method="cv")
+```
+
+Como vemos, el resultado es que el número de árboles que nos indica como óptimo es 100, al igual que el número de árboles que ha generado boosting, por lo que, esto quiere decir, que necesitamos una mayor cantidad de árboles para ajustar el modelo, y que la profundida del árbol no es correcta.
+
+```{r}
+boosting.model2 = gbm(medv ~., data=datos[i,], distribution = "gaussian",
+    cv.folds = 10, n.trees = 15000, interaction.depth = floor(sqrt(ncol(datos))))
+summary(boosting.model2)
+
+pred.boost.2 = predict(boosting.model2, newdata = datos[-i,] , n.trees =boosting.model2$n.trees)
+plot(pred.boost.2, datos[-i,]$medv)
+abline(0,1,col="darkblue")
+Eout.boosting.2 = mean((pred.boost.2 - datos[-i,]$medv)^2)
+cat("Eout = ", Eout.boosting.2, "\n")
+gbm.perf(boosting.model2, oobag.curve = T, method="cv")
+```
+
+Como vemos, aumentando 100 veces el número de árboles máximo, el ajuste a los datos es significativamente mayor, pero, como contrapartida, el coste computacional que tiene es bastante mayor que otros modelos, pero a cambio obtenemos un modelo bastante mejor. También debemos hacer que la profundidad del árbol sea pequeña, y como cota superior se establece $\lfloor\sqrt{p}\rfloor$ donde $p$ es el número de variables predictoras que disponemos.
+
+Comparando con los otros modelos, el boosting requiere de un coste computacional mucho mayor que los otros modelos, para obtener unos errores peores que en los otros modelos, quedando de estos tres como claro ganador randomForest, ya que en no requiere de un coste computacional muy alto, y obtiene unos resultados muy muy buenos.
