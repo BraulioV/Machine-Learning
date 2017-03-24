@@ -542,3 +542,82 @@ gbm.perf(boosting.model2, oobag.curve = T, method="cv")
 Como vemos, aumentando 100 veces el número de árboles máximo, el ajuste a los datos es significativamente mayor, pero, como contrapartida, el coste computacional que tiene es bastante mayor que otros modelos, pero a cambio obtenemos un modelo bastante mejor. También debemos hacer que la profundidad del árbol sea pequeña, y como cota superior se establece $\lfloor\sqrt{p}\rfloor$ donde $p$ es el número de variables predictoras que disponemos.
 
 Comparando con los otros modelos, el boosting requiere de un coste computacional mucho mayor que los otros modelos, para obtener unos errores peores que en los otros modelos, quedando de estos tres como claro ganador randomForest, ya que en no requiere de un coste computacional muy alto, y obtiene unos resultados muy muy buenos.
+
+# Ejercicio 4
+\sffamily\bfseries
+Usar el conjunto de datos OJ que es parte del paquete ISLR.
+
+1. Crear un conjunto de entrenamiento conteniendo una muestra aleatoria de 800 observaciones, y un conjunto de test conteniendo el resto de las observaciones. Ajustar un árbol a los datos de entrenamiento, con “Purchase” como la variable respuesta y las otras variables como predictores (paquete tree de R).
+
+2. Usar la función summary() para generar un resumen estadístico acerca del árbol y describir los resultados obtenidos: tasa de error de “training”, número de nodos del árbol, etc. 
+
+3. Crear un dibujo del árbol e interpretar los resultados (0.5 puntos)
+
+4. Predecir la respuesta de los datos de test, y generar e interpretar la matriz de confusión de los datos de test. ¿Cuál es la tasa de error del test? ¿Cuál es la precisión del test? 
+
+5. Aplicar la función cv.tree() al conjunto de “training” y determinar el tamaño óptimo del árbol. ¿Qué hace cv.tree?
+
+6. Bonus-4. Generar un gráfico con el tamaño del árbol en el eje x (número de nodos) y la tasa de error de validación cruzada en el eje y. ¿Qué tamaño de árbol corresponde a la tasa más pequeña de error de clasificación por validación cruzada?
+
+\normalfont
+
+1) Vamos a proceder a realizar el conjunto de test para el set $OJ$.
+```{r}
+datos = data.frame(OJ)
+training = sample(x=nrow(datos), size=800)
+```
+
+Para generar el árbol de entrenamiento, usamos la función $tree$ de la biblioteca $tree$.
+
+```{r}
+attach(datos)
+tr = tree(Purchase ~ ., data=datos[training,])
+print(tr)
+```
+Como podemos ver en el resultado del código anterior, vemos en el resultado del árbol, como para cada una de las variables predictoras tenemos una probabilidad que nos clasifica en $MM$ o $CH$ según el valor de entrada, y el número de datos que se han clasificado siguiendo el árbol según el número de variables usadas para clasificar.
+
+2) Ahora vemos los resultados que nos dan la función $summary$
+```{r}
+s = summary(tr)
+print(s)
+```
+En la salida de $summary$, vemos como se nos indica las variables que se han usado para realizar el árbol, ya que son las más relevantes para clasificar los datos del conjunto de test. Además de esto, vemos el número de nodos de los que dispone el árbol y el error resiudal que se preoduce, y el error dentro de los datos de training.
+
+Como vemos, se produce un modelo de clasificación decente y simple de explicar.
+
+3) Ahora, procedemos a pintar el árbol de clasificación que obtenemos:
+```{r}
+plot(tr)
+text(tr, pretty=0)
+```
+
+En el resultado de la función, vemos cómo se desarrolla el árbol en dos ramas principales, en las que una dato $d'$ se clasificará en una clase u otra, de acuerdo a la probabilidad que vemos en el árbol.
+
+4) Ahora vamos a comprobar qué error de test tiene el modelo, usando la función $pred$.
+
+```{r}
+pred = predict(tr, datos[-training,], type="class")
+table(pred, Purchase[-training])
+cat("Precision: ", mean(pred != Purchase[-training]) ,"\n")
+cat("Etest = ", s$dev/s$df,"\n")
+```
+
+Al realizar la matriz de confusión, vemos que la imprecisión del modelo es todo aquello que no esté en la diagonal principal y la precisión del test, la podemos obtener en el summary del modelo. Para obtenerla, dividimos la desviación entre el número de muestras usadas.
+
+5) $cv.tree$ realiza un proceso de validación cruzada en el árbol para estimar cuál es el mejor tamaño de este. Para ello, el la función recibe un modelo $tree$, un $k$ para indicar el tamaño de validación cruzada y una función de poda en el árbol.
+
+```{r}
+# K = 10 por defecto
+cvTree = cv.tree(tr, FUN = prune.misclass)
+data.frame(cvTree$size, cvTree$dev)
+```
+
+Como vemos, en la ``tabla'' que generamos con data.frame, vemos el tamaño y la desviación que tiene cada modelo. El mejor modelo es aquel que obtenga menos desviación, en este caso, el modelo que tiene el árbol con tamaño 7.
+
+6) Para generar el gráfico, solo tenemos hacer la siguiente llamada a $plot$.
+
+```{r}
+plot(cvTree$size, cvTree$dev, type="b", col = "blue")
+```
+
+En la gráfica, podemos ver como efectivamente, el mejor modelo es el que tiene un tamaño de 7, ya que es el que tiene menor desviación.
