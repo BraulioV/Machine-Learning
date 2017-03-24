@@ -23,4 +23,8 @@ Also, there are implementations to measure the overfitting of the model, apply r
 
 ## 3. Generalized linear models, SVM, KNN and Trees
 
-In this section, I followed the book [ An Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/) (ISLR), and do different exercise with generalized linear models, Support Vector Machine, KNN, Boosting, Bagging, Random Forest and Trees... and different dataset.
+In this section, I followed the book [ An Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/) (ISLR), and do different exercises with generalized linear models, Support Vector Machine, KNN, Boosting, Bagging, Random Forest and Trees... and different dataset.
+
+---
+
+Some data visualization are made with `ggplot2`, so, in order to execute the code, this package is required.
